@@ -6,33 +6,28 @@
 #include "write-buffer.c"
 
 typedef struct line_s {
-  uint8_t x;
-  uint8_t length;
-  uint8_t line[MAX_LINE_LENGTH];
+  int x;
+  int length;
+  char line[MAX_LINE_LENGTH];
 } line_t;
 
-typedef const char* (*read_fn)(uint8_t *data, uint8_t len);
+typedef void (*read_fn)(const char *data);
 
-typedef struct editor_s {
-  const char* prompt;
-  read_fn onLine;
-  enum mode_e {
-    NORMAL,
-    ESC,
-    CSI
-  } mode:4;
-  uint8_t csi_num:4;
-  uint8_t csi_args[3];
-  line_t current;
-  line_t memory;
-} editor_t;
-
-static editor_t editor;
+static const char* prompt;
+static read_fn onLine;
+static enum mode_e {
+  NORMAL,
+  ESC,
+  CSI
+} mode;
+static int csi_num;
+static char csi_args[3];
+static line_t current, memory;
 static struct termios old_tio, new_tio;
 
-static bool moveLeft(uint8_t n) {
+static bool moveLeft(int n) {
   if (n == 0) return true;
-  editor.current.x -= n;
+  current.x -= n;
   writeCString("\33[");
   writeInt(n);
   writeChar('D');
@@ -40,9 +35,9 @@ static bool moveLeft(uint8_t n) {
   return true;
 }
 
-static bool moveRight(uint8_t n) {
+static bool moveRight(int n) {
   if (n == 0) return true;
-  editor.current.x += n;
+  current.x += n;
   writeCString("\33[");
   writeInt(n);
   writeChar('C');
@@ -52,7 +47,7 @@ static bool moveRight(uint8_t n) {
 
 static bool handleChar(char c) {
   if (c == 0) { goto refresh; }
-  switch (editor.mode) {
+  switch (mode) {
   case NORMAL:
     // Insert printable characters into line
     if (c >= 0x20 && c < 0x7f) {
@@ -61,16 +56,16 @@ static bool handleChar(char c) {
 
     // Handle the start of a CSI sequence
     if (c == 27) {
-      editor.mode = ESC;
+      mode = ESC;
       return true;
     }
 
     // Handle Control+D
     if (c == 4) {
       // If there is data, clear it.
-      if (editor.current.length) {
-        editor.current.length = 0;
-        editor.current.x = 0;
+      if (current.length) {
+        current.length = 0;
+        current.x = 0;
         goto refresh;
       }
       // Otherwise, exit the console.
@@ -80,7 +75,7 @@ static bool handleChar(char c) {
 
     // Handle backspace
     if (c == 127) {
-      if (editor.current.x > 0) {
+      if (current.x > 0) {
         moveLeft(1);
         goto delete;
       }
@@ -91,14 +86,12 @@ static bool handleChar(char c) {
     if (c == 10) {
       writeCString("\r\n");
       writeFlush();
-      if (editor.current.length) {
-        const char* newPrompt = editor.onLine(editor.current.line, editor.current.length);
-        if (newPrompt) {
-          editor.prompt = newPrompt;
-        }
+      if (current.length) {
+        current.line[current.length] = 0;
+        onLine(current.line);
       }
-      editor.memory.x = 0;
-      editor.memory.length = 0;
+      memory.x = 0;
+      memory.length = 0;
       goto swap;
     }
     if (c == 12) { // Control+L clear screen
@@ -113,64 +106,64 @@ static bool handleChar(char c) {
     return true;
   case ESC:
     if (c == '[') {
-      editor.csi_num = 0;
-      editor.csi_args[0] = 0;
-      editor.mode = CSI;
+      csi_num = 0;
+      csi_args[0] = 0;
+      mode = CSI;
     }
     else {
-      editor.mode = NORMAL;
+      mode = NORMAL;
     }
     return true;
   case CSI:
     if (c >= '0' && c <= '9') {
-      editor.csi_args[editor.csi_num] = (uint8_t)(editor.csi_args[editor.csi_num] * 10 + (c - '0'));
+      csi_args[csi_num] = (csi_args[csi_num] * 10 + (c - '0'));
       return true;
     }
     if (c == ';') {
-      editor.csi_num++;
-      if (editor.csi_num >= 8) editor.mode = NORMAL;
-      else editor.csi_args[editor.csi_num] = 0;
+      csi_num++;
+      if (csi_num >= 8) mode = NORMAL;
+      else csi_args[csi_num] = 0;
       return true;
     }
     if (c >= '@' && c <= '~') {
-      editor.mode = NORMAL;
+      mode = NORMAL;
       switch (c) {
       case 'H': // Home
-        if (editor.current.x == 0) return true;
-        return moveLeft(editor.current.x);
+        if (current.x == 0) return true;
+        return moveLeft(current.x);
       case 'F': // End
-        if (editor.current.x == editor.current.length) return true;
-        return moveRight(editor.current.length - editor.current.x);
+        if (current.x == current.length) return true;
+        return moveRight(current.length - current.x);
       case 'A': case 'B': // Up or down
         goto swap;
       case 'D': // Left
         // Alt+Left or Control+Left is word-left
-        if (editor.csi_num == 1 && (editor.csi_args[1] == 3 || editor.csi_args[1] == 5)) {
-          uint8_t i = editor.current.x;
-          while (i > 0 && editor.current.line[--i - 1] != 0x20);
-          return moveLeft(editor.current.x - i);
+        if (csi_num == 1 && (csi_args[1] == 3 || csi_args[1] == 5)) {
+          int i = current.x;
+          while (i > 0 && current.line[--i - 1] != 0x20);
+          return moveLeft(current.x - i);
         }
         // Otherwise do plain left
-        if (editor.current.x > 0) {
+        if (current.x > 0) {
           return moveLeft(1);
         }
         return true;
       case 'C': // Right
         // Alt+Right or Control+Right is word-right
-        if (editor.csi_num == 1 && (editor.csi_args[1] == 3 || editor.csi_args[1] == 5)) {
-          uint8_t i = editor.current.x;
-          while (i < editor.current.length && editor.current.line[++i] != 0x20);
-          return moveRight(i - editor.current.x);
+        if (csi_num == 1 && (csi_args[1] == 3 || csi_args[1] == 5)) {
+          int i = current.x;
+          while (i < current.length && current.line[++i] != 0x20);
+          return moveRight(i - current.x);
         }
         // Otherwise to plain right
-        if (editor.current.x < editor.current.length) {
+        if (current.x < current.length) {
           return moveRight(1);
         }
         return true;
 
       // Handle delete
       case '~':
-        if (editor.current.length > editor.current.x) {
+        if (current.length > current.x) {
           goto delete;
         }
         return true;
@@ -179,9 +172,9 @@ static bool handleChar(char c) {
         writeChar('\n');
         writeInt(c);
         writeChar(':');
-        for (uint8_t i = 0; i <= editor.csi_num; i++) {
+        for (int i = 0; i <= csi_num; i++) {
           writeChar(' ');
-          writeInt(editor.csi_args[i]);
+          writeInt(csi_args[i]);
         }
         writeChar('\n');
         writeFlush();
@@ -192,23 +185,23 @@ static bool handleChar(char c) {
   return false;
 
   insert: {
-    uint8_t i = editor.current.length;
-    uint8_t t = editor.current.length + 1;
+    int i = current.length;
+    int t = current.length + 1;
     if (i > MAX_LINE_LENGTH) {
       i = MAX_LINE_LENGTH;
     }
-    while (i > editor.current.x) {
-      editor.current.line[i] = editor.current.line[i - 1];
+    while (i > current.x) {
+      current.line[i] = current.line[i - 1];
       i--;
     }
-    editor.current.line[editor.current.x] = (uint8_t)c;
-    if (editor.current.x < MAX_LINE_LENGTH - 1) {
-      editor.current.x++;
+    current.line[current.x] = c;
+    if (current.x < MAX_LINE_LENGTH - 1) {
+      current.x++;
     }
-    if (editor.current.length < MAX_LINE_LENGTH) {
-      editor.current.length++;
+    if (current.length < MAX_LINE_LENGTH) {
+      current.length++;
     }
-    if (editor.current.x == t) {
+    if (current.x == t) {
       write(1, &c, 1);
       return true;
     }
@@ -217,29 +210,29 @@ static bool handleChar(char c) {
   goto refresh;
 
   swap: {
-    line_t temp = editor.current;
-    editor.current = editor.memory;
-    editor.memory = temp;
+    line_t temp = current;
+    current = memory;
+    memory = temp;
   }
   goto refresh;
 
   delete: {
-    uint8_t i = editor.current.x;
-    while (i < editor.current.length) {
-      editor.current.line[i] = editor.current.line[i + 1];
+    int i = current.x;
+    while (i < current.length) {
+      current.line[i] = current.line[i + 1];
       i++;
     }
-    editor.current.length--;
+    current.length--;
   }
   goto refresh;
 
   refresh:
     writeCString("\r\33[K");
-    writeCString((const char*)editor.prompt);
-    writeString(editor.current.line, editor.current.length);
-    if (editor.current.x < editor.current.length) {
+    writeCString((const char*)prompt);
+    writeString(current.line, current.length);
+    if (current.x < current.length) {
       writeCString("\33[");
-      writeInt((editor.current.length - editor.current.x));
+      writeInt((current.length - current.x));
       writeChar('D');
     }
     writeFlush();
@@ -261,9 +254,7 @@ static void onInt(int sig) {
   }
 }
 
-void startEditor(const char* prompt, read_fn onLine) {
-  editor.prompt = prompt;
-  editor.onLine = onLine;
+void startEditor() {
 	tcgetattr(STDIN_FILENO, &old_tio);
 	new_tio = old_tio;
 	/* disable canonical mode (buffered i/o) and local echo */
