@@ -33,11 +33,19 @@ typedef union {
   uint64_t num;
 } pair_t;
 
-typedef void (*function_t)();
 
 typedef struct {
-  const char* name;
-  function_t* fn;
-} builtin_t;
+  int sym;
+  value_t val;
+} binding_t;
+
+typedef struct environment_s environment_t;
+
+struct environment_s {
+  environment_t *parent;
+  int len;
+  binding_t bindings[];
+};
+
 
 #endif

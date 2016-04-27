@@ -2,7 +2,13 @@
 #define SYMBOL_C
 
 #include <stdlib.h>
-#include "types.h"
+
+typedef void (*function_t)();
+
+typedef struct {
+  const char* name;
+  function_t* fn;
+} builtin_t;
 
 static const builtin_t builtins[] = {
   // atoms
