@@ -128,9 +128,9 @@ int main() {
   printf("Reverse numbers: ");
   dump(reverse(numbers));
   dump(reverse(cdr(numbers)));
-  dump(reverse(cdr(cdr(numbers))));
-  dump(reverse(cdr(cdr(cdr(numbers)))));
-  dump(reverse(cdr(cdr(cdr(cdr(numbers))))));
+  dump(reverse(cddr(numbers)));
+  dump(reverse(cdddr(numbers)));
+  dump(reverse(cddddr(numbers)));
   dump(cons(
     Symbol("+"),
     cons(

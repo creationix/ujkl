@@ -122,14 +122,41 @@ static int find_pair_slot() {
 
 
 API value_t car(value_t var) {
-  if (var.type != PairType) return Undefined;
-  return pairs[var.data].left;
+  return var.type == PairType ? pairs[var.data].left : Undefined;
 }
 
 API value_t cdr(value_t var) {
-  if (var.type != PairType) return Undefined;
-  return pairs[var.data].right;
+  return var.type == PairType ? pairs[var.data].right : Undefined;
 }
+
+#define caar(var) car(car(var))
+#define cadr(var) car(cdr(var))
+#define cdar(var) cdr(car(var))
+#define cddr(var) cdr(cdr(var))
+#define caaar(var) car(car(car(var)))
+#define caadr(var) car(car(cdr(var)))
+#define cadar(var) car(cdr(car(var)))
+#define caddr(var) car(cdr(cdr(var)))
+#define cdaar(var) cdr(car(car(var)))
+#define cdadr(var) cdr(car(cdr(var)))
+#define cddar(var) cdr(cdr(car(var)))
+#define cdddr(var) cdr(cdr(cdr(var)))
+#define caaaar(var) car(car(car(car(var))))
+#define caaadr(var) car(car(car(cdr(var))))
+#define caadar(var) car(car(cdr(car(var))))
+#define caaddr(var) car(car(cdr(cdr(var))))
+#define cadaar(var) car(cdr(car(car(var))))
+#define cadadr(var) car(cdr(car(cdr(var))))
+#define caddar(var) car(cdr(cdr(car(var))))
+#define cadddr(var) car(cdr(cdr(cdr(var))))
+#define cdaaar(var) cdr(car(car(car(var))))
+#define cdaadr(var) cdr(car(car(cdr(var))))
+#define cdadar(var) cdr(car(cdr(car(var))))
+#define cdaddr(var) cdr(car(cdr(cdr(var))))
+#define cddaar(var) cdr(cdr(car(car(var))))
+#define cddadr(var) cdr(cdr(car(cdr(var))))
+#define cdddar(var) cdr(cdr(cdr(car(var))))
+#define cddddr(var) cdr(cdr(cdr(cdr(var))))
 
 API value_t cons(value_t left, value_t right) {
   // For now the GC bits are set to zero.
