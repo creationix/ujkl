@@ -1,3 +1,7 @@
+default:
+	$(CC) -Wall -Werror -std=c11 -g main2.c
+	./a.out
+
 musl:
 	musl-gcc -Wall -Werror -std=c11 -Os -static main2.c
 	./a.out
