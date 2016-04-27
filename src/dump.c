@@ -14,11 +14,11 @@
 #define CPAREN "\x1b[38;5;247m"
 #define CSEP "\x1b[38;5;240m"
 
-API void dump(value_t val) {
+static void _dump(value_t val) {
   switch (val.type) {
     case AtomType:
       switch (val.data) {
-        case -1: printf(CNIL"()"); return;
+        case -1: printf(CNIL"nil"); return;
         case 1: printf(CBOOL"true"); return;
         case 0: printf(CBOOL"false"); return;
       }
@@ -37,27 +37,33 @@ API void dump(value_t val) {
       pair_t pair = pairs[val.data];
       printf(CPAREN"(");
       if (isNil(pair.right)) {
-        dump(pair.left);
+        _dump(pair.left);
       }
       else if (pair.right.type == PairType) {
-        dump(pair.left);
+        _dump(pair.left);
         while (pair.right.type == PairType) {
           printf(" ");
           pair = pairs[pair.right.data];
-          dump(pair.left);
+          _dump(pair.left);
         }
         if (!isNil(pair.right)) {
-          dump(pair.right);
+          printf(CSEP" . ");
+          _dump(pair.right);
         }
       } else {
-        dump(pair.left);
+        _dump(pair.left);
         printf(CSEP" . ");
-        dump(pair.right);
+        _dump(pair.right);
       }
       printf(CPAREN")");
       return;
     }
   }
+}
+
+API void dump(value_t val) {
+  _dump(val);
+  printf(COFF"\n");
 }
 
 #endif

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include "symbols.c"
 
 #ifndef PAIRS_BLOCK_SIZE
@@ -91,15 +92,6 @@ API inline bool isNil(value_t value) {
   return value.raw == Nil.raw;
 }
 
-API inline bool isFalsy(value_t value) {
-  return value.raw == Nil.raw ||
-         value.raw == False.raw;
-}
-
-API inline bool isTruthy(value_t value) {
-  return !isFalsy(value);
-}
-
 API bool isFree(pair_t pair) {
   return pair.raw == Free.raw;
 }
@@ -152,6 +144,16 @@ API value_t cons(value_t left, value_t right) {
     .data = slot
   };
 }
+
+#define List(...) ({\
+  value_t values[] = { __VA_ARGS__ }; \
+  value_t node = Nil; \
+  for (int i = sizeof(values)/sizeof(value_t) - 1; i >= 0; i--) { \
+    node = cons(values[i], node); \
+  } \
+  node; })
+
+#define Mapping(name, value) cons(Symbol(#name),value)
 
 // Append right to left (mutating left)
 // returns left for convenience

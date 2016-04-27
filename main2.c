@@ -78,137 +78,81 @@ int main() {
   assert((Integer(1)).data == 1);
   assert((Integer(0)).data == 0);
   assert((Integer(-1)).data == -1);
-  value_t numbers = cons(
-    Integer(1),
-    cons(
-      Integer(2),
-      cons(
-        Integer(3),
-        cons(
-          Integer(4),
-          Nil
-        )
-      )
-    )
+  value_t numbers = List(Integer(1), Integer(2), Integer(3), Integer(4));
+  value_t tim = List(
+    Mapping(name, Symbol("Tim")),
+    Mapping(age, Integer(34)),
+    Mapping(isProgrammer, True)
   );
-  value_t tim = cons(
-    cons(Symbol("name"),Symbol("Tim")),
-    cons(
-      cons(Symbol("age"),Integer(34)),
-      cons(
-        cons(Symbol("isProgrammer"),True),
-        Nil
-      )
-    )
-  );
-  value_t jack = cons(
-    cons(Symbol("name"),Symbol("Jack")),
-    cons(
-      cons(Symbol("age"),Integer(10)),
-      cons(
-        cons(Symbol("isProgrammer"),True),
-        Nil
-      )
-    )
+  value_t jack = List(
+    Mapping(name, Symbol("Jack")),
+    Mapping(age, Integer(10)),
+    Mapping(isProgrammer, True)
   );
   printf("tim.name: ");
   dump(mget(tim, Symbol("name")));
-  printf(COFF"\ntim.age: ");
+  printf("tim.age: ");
   dump(mget(tim, Symbol("age")));
-  printf(COFF"\ntim.isProgrammer: ");
+  printf("tim.isProgrammer: ");
   dump(mget(tim, Symbol("isProgrammer")));
-  printf(COFF"\ntim.wat: ");
+  printf("tim.wat: ");
   dump(mget(tim, Symbol("wat")));
-  printf(COFF"\nhas name: ");
+  printf("has name: ");
   dump(mhas(tim, Symbol("name")));
-  printf(COFF"\nhas wat: ");
+  printf("has wat: ");
   dump(mhas(tim, Symbol("wat")));
-  printf(COFF"\nset name: ");
+  printf("set name: ");
   dump(tim = mset(tim, Symbol("name"), Symbol("Timbo")));
-  printf(COFF"\nset 42: ");
+  printf("set 42: ");
   dump(tim = mset(tim, Integer(42), True));
-  printf(COFF"\nset 42 on empty: ");
+  printf("set 42 on empty: ");
   dump(mset(Nil, Integer(42), True));
-  printf(COFF"\n");
   dump(tim);
-  printf(COFF"\n");
   dump(numbers);
-  printf("\n");
   dump(cdr(numbers));
-  printf("\n");
   dump(cdr(cdr(numbers)));
-  printf("\n");
   dump(cdr(cdr(cdr(numbers))));
-  printf("\n");
   dump(cdr(cdr(cdr(cdr(numbers)))));
-  printf("\n");
   dump(cdr(cdr(cdr(cdr(cdr(numbers))))));
-  printf("\n");
   dump(tim);
-  printf("\n");
   dump(car(tim));
-  printf("\n");
   dump(cdr(tim));
-  printf("\n");
   dump(cons(tim, jack));
-  printf("\n");
   dump(cons(jack, tim));
-  printf(COFF"\nAppend tim and jack: ");
+  printf("Append tim and jack: ");
   dump(append(tim, jack));
-  printf(COFF"\nJust tim: ");
+  printf("Just tim: ");
   dump(tim);
-  printf(COFF"\nReverse tim: ");
+  printf("Reverse tim: ");
   dump(reverse(tim));
-  printf(COFF"\nReverse numbers: ");
+  printf("Reverse numbers: ");
   dump(reverse(numbers));
-  printf("\n");
   dump(reverse(cdr(numbers)));
-  printf("\n");
   dump(reverse(cdr(cdr(numbers))));
-  printf("\n");
   dump(reverse(cdr(cdr(cdr(numbers)))));
-  printf("\n");
   dump(reverse(cdr(cdr(cdr(cdr(numbers))))));
-  printf("\n");
   dump(cons(
     Symbol("+"),
     cons(
       Integer(1),
       cons(
         Integer(2),
-        Nil
+        True
       )
     )
   ));
-  printf("\n");
-  dump(cons(
+  dump(List(
     Symbol("def"),
-    cons(
-      Symbol("add"),
-      cons(
-        cons(
-          Symbol("a"),
-          cons(
-            Symbol("b"),
-            Nil
-          )
-        ),
-        cons(
-          cons(
-            Symbol("+"),
-            cons(
-              Symbol("a"),
-              cons(
-                Symbol("b"),
-                Nil
-              )
-            )
-          ),
-          Nil
-        )
-      )
+    Symbol("add"),
+    List(
+      Symbol("a"),
+      Symbol("b")
+    ),
+    List(
+      Symbol("+"),
+      Symbol("a"),
+      Symbol("b")
     )
   ));
-  printf(COFF"\n");
   return 0;
 }
