@@ -142,6 +142,65 @@ int main() {
   ));
   dump(List(
     Symbol("def"),
+    Symbol("sequence"),
+    List(
+      Symbol("shuffle"),
+      List(
+        Symbol("concat"),
+        List(
+          Symbol("map"),
+          List(
+            Symbol("i"),
+            Symbol("size"),
+          ),
+          List(
+            Symbol("if"),
+            List(
+              Symbol("<"),
+              List(
+                Symbol("%"),
+                Symbol("i"),
+                Symbol("width")
+              ),
+              Symbol("ww")
+            ),
+            List(
+              Symbol("list"),
+              True,
+              Symbol("i")
+            )
+          )
+        ),
+        List(
+          Symbol("map"),
+          List(
+            Symbol("i"),
+            Symbol("size"),
+          ),
+          List(
+            Symbol("if"),
+            List(
+              Symbol("<"),
+              List(
+                Symbol("÷"),
+                Symbol("i"),
+                Symbol("width")
+              ),
+              Symbol("hh")
+            ),
+            List(
+              Symbol("list"),
+              False,
+              Symbol("i")
+            )
+          )
+        )
+      )
+    )
+  ));
+
+  dump(List(
+    Symbol("def"),
     Symbol("add"),
     List(
       Symbol("a"),
