@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "data.c"
 
-// Jack's Shades-O-Green Theme
+// Jack's Shades-O-Green Theme (256 colors)
 // #define COFF "\x1b[0m"
 // #define CNIL "\x1b[38;5;30m"
 // #define CBOOL "\x1b[38;5;82m"
@@ -15,16 +15,26 @@
 // #define CPAREN "\x1b[38;5;31m"
 // #define CSEP "\x1b[38;5;160m"
 
-// Tim's Blue-Orange Theme
+// Tim's Blue-Orange Theme (256 colors)
+// #define COFF "\x1b[0m"
+// #define CNIL "\x1b[38;5;63m"
+// #define CBOOL "\x1b[38;5;202m"
+// #define CINT "\x1b[38;5;39m"
+// #define CSYM "\x1b[38;5;252m"
+// #define CUNDEF "\x1b[38;5;244m"
+// #define CBUILTIN "\x1b[38;5;214m"
+// #define CPAREN "\x1b[38;5;24m"
+// #define CSEP "\x1b[38;5;26m"
+
 #define COFF "\x1b[0m"
-#define CNIL "\x1b[38;5;63m"
-#define CBOOL "\x1b[38;5;202m"
-#define CINT "\x1b[38;5;39m"
-#define CSYM "\x1b[38;5;252m"
-#define CUNDEF "\x1b[38;5;244m"
-#define CBUILTIN "\x1b[38;5;214m"
-#define CPAREN "\x1b[38;5;24m"
-#define CSEP "\x1b[38;5;26m"
+#define CNIL "\x1b[1;36m"
+#define CBOOL "\x1b[1;33m"
+#define CINT "\x1b[1;35m"
+#define CSYM "\x1b[1;39m"
+#define CUNDEF "\x1b[0;34m"
+#define CBUILTIN "\x1b[1;32m"
+#define CPAREN "\x1b[1;30m"
+#define CSEP "\x1b[1;34m"
 
 static void _dump(value_t val) {
   switch (val.type) {
