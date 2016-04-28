@@ -9,11 +9,11 @@
 // #define CNIL "\x1b[38;5;30m"
 // #define CBOOL "\x1b[38;5;82m"
 // #define CINT "\x1b[38;5;34m"
-// #define CSYM "\x1b[38;5;157m"
+// #define CSYM "\x1b[38;5;226m"
 // #define CUNDEF "\x1b[38;5;244m"
-// #define CBUILTIN "\x1b[38;5;190m"
+// #define CBUILTIN "\x1b[38;5;208m"
 // #define CPAREN "\x1b[38;5;31m"
-// #define CSEP "\x1b[38;5;240m"
+// #define CSEP "\x1b[38;5;160m"
 
 // Tim's Blue-Orange Theme
 #define COFF "\x1b[0m"
