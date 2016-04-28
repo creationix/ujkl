@@ -10,7 +10,6 @@
 // A map is made up of linked pairs ((key, value), next)
 // A string is a list of integers.
 
-
 int main() {
   builtins = (const builtin_t[]){
     // atoms

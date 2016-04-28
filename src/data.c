@@ -10,7 +10,6 @@
 #define PAIRS_BLOCK_SIZE 16
 #endif
 
-
 typedef enum {
   AtomType,
   IntegerType,

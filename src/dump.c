@@ -4,15 +4,27 @@
 #include <stdio.h>
 #include "data.c"
 
+// Jack's Shades-O-Green Theme
+// #define COFF "\x1b[0m"
+// #define CNIL "\x1b[38;5;30m"
+// #define CBOOL "\x1b[38;5;82m"
+// #define CINT "\x1b[38;5;34m"
+// #define CSYM "\x1b[38;5;157m"
+// #define CUNDEF "\x1b[38;5;244m"
+// #define CBUILTIN "\x1b[38;5;190m"
+// #define CPAREN "\x1b[38;5;31m"
+// #define CSEP "\x1b[38;5;240m"
+
+// Tim's Blue-Orange Theme
 #define COFF "\x1b[0m"
-#define CNIL "\x1b[38;5;247m"
-#define CBOOL "\x1b[38;5;39m"
+#define CNIL "\x1b[38;5;63m"
+#define CBOOL "\x1b[38;5;202m"
+#define CINT "\x1b[38;5;39m"
+#define CSYM "\x1b[38;5;252m"
 #define CUNDEF "\x1b[38;5;244m"
-#define CINT "\x1b[38;5;208m"
-#define CBUILTIN "\x1b[38;5;251m"
-#define CSYM "\x1b[38;5;46m"
-#define CPAREN "\x1b[38;5;247m"
-#define CSEP "\x1b[38;5;240m"
+#define CBUILTIN "\x1b[38;5;214m"
+#define CPAREN "\x1b[38;5;24m"
+#define CSEP "\x1b[38;5;26m"
 
 static void _dump(value_t val) {
   switch (val.type) {
@@ -27,10 +39,10 @@ static void _dump(value_t val) {
       printf(CINT"%d", val.data); return;
     case SymbolType:
       if (val.data < 0) {
-        printf(CBUILTIN"%s", symbols_get(val.data));
+        printf(CSYM"%s", symbols_get(val.data));
       }
       else {
-        printf(CSYM"%s", symbols_get(val.data));
+        printf(CBUILTIN"%s", symbols_get(val.data));
       }
       return;
     case PairType: {
