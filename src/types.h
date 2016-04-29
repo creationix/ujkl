@@ -141,4 +141,23 @@ API bool setPair(value_t slot, pair_t pair);
 #define cdddar(var) cdr(cdr(cdr(car(var))))
 #define cddddr(var) cdr(cdr(cdr(cdr(var))))
 
+
+#define fn2(name, a, b, body) \
+static value_t name(value_t env, value_t args) { \
+  value_t a = eval(env, car(args)); \
+  args = cdr(args);                 \
+  value_t b = eval(env, car(args)); \
+  body \
+}
+
+#define fn3(name, a, b, c, body) \
+static value_t name(value_t env, value_t args) { \
+  value_t a = eval(env, car(args)); \
+  args = cdr(args);                 \
+  value_t b = eval(env, car(args)); \
+  args = cdr(args);                 \
+  value_t c = eval(env, car(args)); \
+  body \
+}
+
 #endif

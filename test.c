@@ -1,7 +1,6 @@
 #include <assert.h>
 
-#include "src/dump.c"
-#include "src/builtins.c"
+#include "src/types.h"
 
 void test() {
 

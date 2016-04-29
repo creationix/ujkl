@@ -1,4 +1,4 @@
-CFLAGS=-Wall -Wextra -Werror -pedantic -std=c11 -Os
+CFLAGS=-Wall -Wextra -Werror -pedantic -std=c11
 
 default:
 	$(CC) $(CFLAGS) -g main.c
@@ -14,6 +14,10 @@ gcc:
 
 musl:
 	musl-gcc $(CFLAGS) -g main.c
+	./a.out
+
+static:
+	musl-gcc $(CFLAGS) -O2 -static main.c
 	./a.out
 
 memcheck:
