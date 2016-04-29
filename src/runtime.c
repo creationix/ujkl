@@ -6,21 +6,46 @@
 // input is (environment . args)
 // where environment is a map and args is a cons list
 
+
+#ifdef TRACE
+static int indent = 0;
+static const char *space = "                                                  ";
+#endif
+
 API value_t eval(value_t env, value_t expr) {
+
+#ifdef TRACE
+  // print_string(space, indent);
+  // print("env: ");
+  // dump(env);
+  print_string(space, indent);
+  print("in:  ");
+  dump(expr);
+  indent++;
+#endif
+
   if (expr.type == SymbolType) {
     // User symbols look up value in environment,
     // builtins return themselves.
-    return expr.data < 0 ? mget(env, expr) : expr;
+    expr =  expr.data < 0 ? mget(env, expr) : expr;
   }
-  if (expr.type == PairType) {
+  else if (expr.type == PairType) {
     value_t fn = eval(env, car(expr));
     // Native function.
     if (fn.type == SymbolType && fn.data >= 0) {
-      return symbols_get_fn(fn.data)(env, cdr(expr));
+      expr = symbols_get_fn(fn.data)(env, cdr(expr));
     }
-    // TODO: interpret user-defined function instance
-    return Undefined;
+    else {
+      // TODO: interpret user-defined function instance
+      expr = Undefined;
+    }
   }
+#ifdef TRACE
+  indent--;
+  print_string(space, indent);
+  print("out: ");
+  dump(expr);
+#endif
   return expr;
 }
 
