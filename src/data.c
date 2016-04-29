@@ -38,29 +38,11 @@ static pair_t *pairs;
 static int next_pair;
 static int num_pairs;
 
-static const value_t Undefined = (value_t){
-  .type = AtomType,
-  .data = -2
-};
-
-static const pair_t Free = (pair_t){
-  .raw = ~0ul
-};
-
-API const value_t Nil = (value_t){
-  .type = AtomType,
-  .data = -1
-};
-
-API const value_t False = (value_t){
-  .type = AtomType,
-  .data = 0
-};
-
-API const value_t True = (value_t){
-  .type = AtomType,
-  .data = 1
-};
+#define Undefined ((value_t){.type = AtomType, .data = -2})
+#define Free ((pair_t){.raw = ~0ul})
+#define Nil ((value_t){.type = AtomType,.data = -1})
+#define False ((value_t){.type = AtomType,.data = 0})
+#define True ((value_t){.type = AtomType,.data = 1})
 
 
 API inline value_t Bool(bool val) {
@@ -171,7 +153,7 @@ API value_t cons(value_t left, value_t right) {
   };
 }
 
-#define List(...) ({\
+#define List(...) __extension__({\
   value_t values[] = { __VA_ARGS__ }; \
   value_t node = Nil; \
   for (int i = sizeof(values)/sizeof(value_t) - 1; i >= 0; i--) { \

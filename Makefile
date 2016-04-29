@@ -1,21 +1,31 @@
+CFLAGS=-Wall -Wextra -Werror -pedantic -std=c11
+
 default:
-	$(CC) -Wall -Werror -std=c11 -g main2.c
+	$(CC) $(CFLAGS) -g main2.c
+	./a.out
+
+clang:
+	clang $(CFLAGS) -g main2.c
+	./a.out
+
+gcc:
+	gcc $(CFLAGS) -g main2.c
 	./a.out
 
 musl:
-	musl-gcc -Wall -Werror -std=c11 -Os -static main2.c
+	musl-gcc $(CFLAGS) -Os -static main2.c
 	./a.out
 
 memcheck:
-	gcc -Wall -Werror -std=c11 -g main2.c
+	gcc $(CFLAGS) -g main2.c
 	valgrind --leak-check=full --show-leak-kinds=all ./a.out
 
 lldb:
-	clang -Wall -Werror -std=c11 -g main2.c
+	clang $(CFLAGS) -g main2.c
 	lldb ./a.out
 
 gdb:
-	gcc -Wall -Werror -std=c11 -g main2.c
+	gcc $(CFLAGS) -g main2.c
 	gdb ./a.out
 
 clean:
