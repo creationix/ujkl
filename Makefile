@@ -13,7 +13,7 @@ gcc:
 	./a.out
 
 musl:
-	musl-gcc $(CFLAGS) -static main.c
+	musl-gcc $(CFLAGS) -g main.c
 	./a.out
 
 memcheck:

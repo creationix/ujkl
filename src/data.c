@@ -1,57 +1,35 @@
 #ifndef DATA_C
 #define DATA_C
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include "symbols.c"
+#include "types.h"
+#include <stdlib.h> // for realloc
 
-#ifndef PAIRS_BLOCK_SIZE
-#define PAIRS_BLOCK_SIZE 16
-#endif
+// A list is made up of linked pairs. (value, next)
+// A map is made up of linked pairs ((key, value), next)
+// A string is a list of integers.
 
-typedef enum {
-  AtomType,
-  IntegerType,
-  SymbolType,
-  PairType,
-} type_t;
-
-typedef union {
-  struct {
-    int gc : 1;
-    type_t type : 2;
-    int data : 29;
-  };
-  uint32_t raw;
-} value_t;
-
-typedef union {
-  struct {
-    value_t left;
-    value_t right;
-  };
-  uint64_t raw;
-} pair_t;
 
 static pair_t *pairs;
 static int next_pair;
 static int num_pairs;
 
-#define Undefined ((value_t){.type = AtomType, .data = -2})
-#define Free ((pair_t){.raw = ~0ul})
-#define Nil ((value_t){.type = AtomType,.data = -1})
-#define False ((value_t){.type = AtomType,.data = 0})
-#define True ((value_t){.type = AtomType,.data = 1})
+API pair_t getPair(value_t slot) {
+  return (slot.type == PairType) ? pairs[slot.data] : Free;
+}
 
+API bool setPair(value_t slot, pair_t pair) {
+  if (slot.type != PairType) return false;
+  pairs[slot.data] = pair;
+  return true;
+}
 
-API inline value_t Bool(bool val) {
+API value_t Bool(bool val) {
   return (value_t){
     .type = AtomType,
     .data = val ? 1 : 0
   };
 }
-API inline value_t Integer(int32_t val) {
+API value_t Integer(int32_t val) {
   return (value_t){
     .type = IntegerType,
     .data = val
@@ -65,11 +43,11 @@ API value_t Symbol(const char* sym) {
   };
 }
 
-API inline bool eq(value_t a, value_t b) {
+API bool eq(value_t a, value_t b) {
   return a.raw == b.raw;
 }
 
-API inline bool isNil(value_t value) {
+API bool isNil(value_t value) {
   return value.raw == Nil.raw;
 }
 
@@ -110,35 +88,6 @@ API value_t cdr(value_t var) {
   return var.type == PairType ? pairs[var.data].right : Undefined;
 }
 
-#define caar(var) car(car(var))
-#define cadr(var) car(cdr(var))
-#define cdar(var) cdr(car(var))
-#define cddr(var) cdr(cdr(var))
-#define caaar(var) car(car(car(var)))
-#define caadr(var) car(car(cdr(var)))
-#define cadar(var) car(cdr(car(var)))
-#define caddr(var) car(cdr(cdr(var)))
-#define cdaar(var) cdr(car(car(var)))
-#define cdadr(var) cdr(car(cdr(var)))
-#define cddar(var) cdr(cdr(car(var)))
-#define cdddr(var) cdr(cdr(cdr(var)))
-#define caaaar(var) car(car(car(car(var))))
-#define caaadr(var) car(car(car(cdr(var))))
-#define caadar(var) car(car(cdr(car(var))))
-#define caaddr(var) car(car(cdr(cdr(var))))
-#define cadaar(var) car(cdr(car(car(var))))
-#define cadadr(var) car(cdr(car(cdr(var))))
-#define caddar(var) car(cdr(cdr(car(var))))
-#define cadddr(var) car(cdr(cdr(cdr(var))))
-#define cdaaar(var) cdr(car(car(car(var))))
-#define cdaadr(var) cdr(car(car(cdr(var))))
-#define cdadar(var) cdr(car(cdr(car(var))))
-#define cdaddr(var) cdr(car(cdr(cdr(var))))
-#define cddaar(var) cdr(cdr(car(car(var))))
-#define cddadr(var) cdr(cdr(car(cdr(var))))
-#define cdddar(var) cdr(cdr(cdr(car(var))))
-#define cddddr(var) cdr(cdr(cdr(cdr(var))))
-
 API value_t cons(value_t left, value_t right) {
   // For now the GC bits are set to zero.
   // When we write the GC later this may change.
@@ -153,15 +102,6 @@ API value_t cons(value_t left, value_t right) {
   };
 }
 
-#define List(...) __extension__({\
-  value_t values[] = { __VA_ARGS__ }; \
-  value_t node = Nil; \
-  for (int i = sizeof(values)/sizeof(value_t) - 1; i >= 0; i--) { \
-    node = cons(values[i], node); \
-  } \
-  node; })
-
-#define Mapping(name, value) cons(Symbol(#name),value)
 
 // Append right to left (mutating left)
 // returns left for convenience

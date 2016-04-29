@@ -1,21 +1,16 @@
 #ifndef EDITOR_C
 #define EDITOR_C
-#include <termios.h>
-#include <stdlib.h>
-#include <signal.h>
-#include "print.c"
-
-#ifndef MAX_LINE_LENGTH
-#define MAX_LINE_LENGTH 80
-#endif
+#include "types.h"
+#include <termios.h> // for terminal stuff
+#include <stdlib.h> // for exit
+#include <signal.h> // for SIGINT and signal
+#include <unistd.h> // for read
 
 typedef struct line_s {
   int x;
   int length;
   char line[MAX_LINE_LENGTH];
 } line_t;
-
-typedef void (*read_fn)(const char *data);
 
 static const char* prompt;
 static read_fn onLine;
@@ -98,7 +93,8 @@ static bool handleChar(char c) {
       goto swap;
     }
     if (c == 12) { // Control+L clear screen
-      write(1, "\33[2J\33[H", 7);
+      print("\33[2J\33[H");
+      print_flush();
       goto refresh;
     }
     // Uncomment to see unhandled codes
@@ -203,7 +199,8 @@ static bool handleChar(char c) {
       current.length++;
     }
     if (current.x == t) {
-      write(1, &c, 1);
+      print_char(c);
+      print_flush();
       return true;
     }
 
@@ -279,7 +276,7 @@ API bool editor_step() {
 
 static void onInt(int sig) {
   if (sig == SIGINT) {
-    write(1, "^C", 2);
+    print("^C");
     editor_stop();
     exit(0);
   }

@@ -1,8 +1,7 @@
 #ifndef DUMP_C
 #define DUMP_C
 
-#include "print.c"
-#include "data.c"
+#include "types.h"
 
 #ifndef THEME
   #define COFF ""
@@ -63,10 +62,10 @@ static void _dump(value_t val) {
     case SymbolType:
       if (val.data < 0) print(CSYM);
       else print(CBUILTIN);
-      print(symbols_get(val.data));
+      print(symbols_get_name(val.data));
       return;
     case PairType: {
-      pair_t pair = pairs[val.data];
+      pair_t pair = getPair(val);
       print(CPAREN"(");
       if (isNil(pair.right)) {
         _dump(pair.left);
@@ -75,7 +74,7 @@ static void _dump(value_t val) {
         _dump(pair.left);
         while (pair.right.type == PairType) {
           print_char(' ');
-          pair = pairs[pair.right.data];
+          pair = getPair(pair.right);
           _dump(pair.left);
         }
         if (!isNil(pair.right)) {

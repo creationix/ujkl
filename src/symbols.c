@@ -2,24 +2,17 @@
 #ifndef SYMBOLS_C
 #define SYMBOLS_C
 
-#include <stdlib.h>
-
-#ifndef SYMBOLS_BLOCK_SIZE
-#define SYMBOLS_BLOCK_SIZE 128
-#endif
-
-#ifndef API
-#define API
-#endif
-
-typedef struct {
-  const char* name;
-  void* data;
-} builtin_t;
+#include "types.h"
+#include <stdlib.h> // for realloc
 
 static char *symbols;
 static size_t symbols_len;
-API const builtin_t *builtins;
+static const builtin_t *builtins;
+
+API void symbols_init(const builtin_t *fns) {
+  builtins = fns;
+}
+
 
 static void symbols_resize(size_t needed) {
   if (needed < symbols_len) return;
@@ -33,8 +26,12 @@ static void symbols_resize(size_t needed) {
   symbols_len = new_len;
 }
 
+API api_fn symbols_get_fn(int index) {
+  return index >= 0 ? builtins[index].fn : 0;
+}
+
 // Resolve a symbol index to a null-terminated string.
-API const char *symbols_get(int index) {
+API const char *symbols_get_name(int index) {
   if (index >= 0) {
     return builtins[index].name;
   }

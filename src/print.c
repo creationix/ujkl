@@ -1,16 +1,9 @@
 #ifndef PRINT_C
 #define PRINT_C
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <unistd.h>
+#include "types.h"
+#include <unistd.h> // for write syscall
 
-#ifndef API
-#define API
-#endif
-
-#define WRITE_BUFFER_LENGTH 64
 static char write_buffer[WRITE_BUFFER_LENGTH];
 static size_t write_index;
 
