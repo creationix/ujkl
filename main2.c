@@ -2,6 +2,7 @@
 
 #define SYMBOLS_BLOCK_SIZE 128
 #define PAIRS_BLOCK_SIZE 16
+#define THEME tim
 #define API static
 
 #include "src/dump.c"
@@ -88,23 +89,23 @@ int main() {
     Mapping(age, Integer(10)),
     Mapping(isProgrammer, True)
   );
-  printf("tim.name: ");
+  print("tim.name: ");
   dump(mget(tim, Symbol("name")));
-  printf("tim.age: ");
+  print("tim.age: ");
   dump(mget(tim, Symbol("age")));
-  printf("tim.isProgrammer: ");
+  print("tim.isProgrammer: ");
   dump(mget(tim, Symbol("isProgrammer")));
-  printf("tim.wat: ");
+  print("tim.wat: ");
   dump(mget(tim, Symbol("wat")));
-  printf("has name: ");
+  print("has name: ");
   dump(mhas(tim, Symbol("name")));
-  printf("has wat: ");
+  print("has wat: ");
   dump(mhas(tim, Symbol("wat")));
-  printf("set name: ");
+  print("set name: ");
   dump(tim = mset(tim, Symbol("name"), Symbol("Timbo")));
-  printf("set 42: ");
+  print("set 42: ");
   dump(tim = mset(tim, Integer(42), True));
-  printf("set 42 on empty: ");
+  print("set 42 on empty: ");
   dump(mset(Nil, Integer(42), True));
   dump(tim);
   dump(numbers);
@@ -118,13 +119,13 @@ int main() {
   dump(cdr(tim));
   dump(cons(tim, jack));
   dump(cons(jack, tim));
-  printf("Append tim and jack: ");
+  print("Append tim and jack: ");
   dump(append(tim, jack));
-  printf("Just tim: ");
+  print("Just tim: ");
   dump(tim);
-  printf("Reverse tim: ");
+  print("Reverse tim: ");
   dump(reverse(tim));
-  printf("Reverse numbers: ");
+  print("Reverse numbers: ");
   dump(reverse(numbers));
   dump(reverse(cdr(numbers)));
   dump(reverse(cddr(numbers)));
