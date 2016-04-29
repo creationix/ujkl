@@ -10,8 +10,8 @@
 #define API
 #endif
 
-#define MAX_LINE_LENGTH 64
-static char write_buffer[MAX_LINE_LENGTH];
+#define WRITE_BUFFER_LENGTH 64
+static char write_buffer[WRITE_BUFFER_LENGTH];
 static size_t write_index;
 
 static bool needFlush;
@@ -23,7 +23,7 @@ API void print_flush() {
 }
 
 static void check() {
-  if (write_index == MAX_LINE_LENGTH) print_flush();
+  if (write_index == WRITE_BUFFER_LENGTH) print_flush();
 }
 
 API bool print_int(int num) {
@@ -51,10 +51,21 @@ API bool print_char(const char c) {
 }
 
 API bool print(const char* value) {
+  if (!value) return false;
   while (*value) {
     check();
     write_buffer[write_index++] = *value;
     if (*value++ == '\n') needFlush = true;
+  }
+  if (needFlush) print_flush();
+  return true;
+}
+
+API bool print_string(const char* value, size_t len) {
+  for (size_t i = 0; i < len; i++) {
+    check();
+    write_buffer[write_index++] = value[i];
+    if (value[i] == '\n') needFlush = true;
   }
   if (needFlush) print_flush();
   return true;

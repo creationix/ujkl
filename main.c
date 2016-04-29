@@ -1,165 +1,229 @@
-#include <unistd.h>
-#include "line-reader.c"
-#include "symbol.c"
+#include <assert.h>
 
-pair_t *pairs;
-int num_pairs;
+#define SYMBOLS_BLOCK_SIZE 128
+#define PAIRS_BLOCK_SIZE 16
+#define THEME tim
+#define API static
 
-void writeValue(value_t value) {
-  writeCString(" *");
-  writeInt((int)value.num);
-  if (value.num == (uint32_t)~0) {
-    writeCString(" Undefined");
-    return;
-  }
-  switch (value.type) {
-    case Integer:
-      writeChar(' ');
-      writeInt(value.value);
-      break;
-    case Atom:
-      switch ((atom_t)value.value) {
-        case Nil:
-          writeCString(" nil");
-          break;
-        case True:
-          writeCString(" true");
-          break;
-        case False:
-          writeCString(" false");
-          break;
-      }
-      break;
-    case Symbol:
-      writeChar(' ');
-      writeInt(value.value);
-      writeChar(':');
-      writeCString(getSymbol(value.value));
-      break;
-    case Pair: {
-      pair_t pair = pairs[value.value];
-      writeCString(" (");
-      writeValue(pair.left);
-      writeCString(" .");
-      writeValue(pair.right);
-      writeCString(" )");
-      break;
-    }
-  }
-}
+#include "src/dump.c"
+#include "src/editor.c"
 
-value_t makePair(value_t left, value_t right) {
-  int index = 0;
-  if (!pairs) {
-    num_pairs = 1;
-    pairs = malloc(sizeof(pair_t));
-  }
-  else {
-    // Look for empty slots
-    for (;index < num_pairs; index++) {
-      if (!pairs[index].num) break;
-    }
-    // If none are found, allocate a new slot.
-    if (index == num_pairs) {
-      num_pairs++;
-      pairs = realloc(pairs, (size_t)num_pairs * sizeof(pair_t));
-    }
-  }
-  pairs[index].left = left;
-  pairs[index].right = right;
-  return (value_t){
-    .type = Pair,
-    .gc = 0,
-    .value = index
-  };
-}
-
-value_t makeInt(int val) {
-  return (value_t){
-    .type = Integer,
-    .gc = 0,
-    .value = val
-  };
-}
-
-value_t makeNil() {
-  return (value_t){
-    .type = Atom,
-    .gc = 0,
-    .value = Nil
-  };
-}
-
-value_t makeBool(bool value) {
-  return (value_t){
-    .type = Atom,
-    .gc = 0,
-    .value = value ? True : False
-  };
-}
-
-value_t makeSymbol(const char* name, int len) {
-  int index = matchSymbol(name, len);
-  if (index == 0) return makeNil();
-  else if (index == 1 || index == 2) return makeBool(index == 1);
-  return (value_t){
-    .type = Symbol,
-    .gc = 0,
-    .value = index
-  };
-}
-
-static void handleInput(const char *line) {
-  while (*line) {
-    if (*line == '(') {
-      line++;
-      writeCString(" (");
-      continue;
-    }
-    if (*line == ')') {
-      line++;
-      writeCString(" )");
-      continue;
-    }
-    if (*line == '.') {
-      line++;
-      writeCString(" .");
-      continue;
-    }
-    if (*line == ' ') {
-      line++;
-      continue;
-    }
-    if (*line >= '0' && *line <= '9') {
-      int n = 0;
-      while (*line >= '0' && *line <= '9') {
-        n = n * 10 + (*line - '0');
-        line++;
-      }
-      writeValue(makeInt(n));
-      continue;
-    }
-    const char *start = line;
-    while(*line && *line != '.' && *line != '(' && *line != ')' && *line != ' ') { line++; }
-    writeValue(makeSymbol(start, (int)(line - start)));
-  }
-  writeCString("\n");
+// A list is made up of linked pairs. (value, next)
+// A map is made up of linked pairs ((key, value), next)
+// A string is a list of integers.
+static void onInput(const char *data) {
+  print(data);
+  print_char('\n');
 }
 
 int main() {
-  onLine = handleInput;
   prompt = "> ";
-  writeValue((value_t){
-    .type = 3,
-    .gc = 1,
-    .value = ~0
-  });
-  writeValue(makePair(makeSymbol("add", 0), makeInt(42)));
-  writeChar('\n');
-  writeValue(makeInt(42));
-  writeChar('\n');
-  startEditor();
-  while(stepEditor());
-  stopEditor();
+  onLine = onInput;
+  builtins = (const builtin_t[]){
+    // atoms
+    {"nil", 0},
+    {"true", 0},
+    {"false", 0},
+    // builtins
+    {"def", 0},
+    {"set", 0},
+    {".", 0},
+    {"index", 0},
+    {"lambda", 0},
+    {"λ", 0},
+    {"if", 0},
+    {"unless", 0},
+    {"?", 0},
+    {"and", 0},
+    {"or", 0},
+    {"not", 0},
+    {"print", 0},
+    {"list", 0},
+    {"read", 0},
+    {"write", 0},
+    {"exec", 0},
+    {"escape", 0},
+    {"sleep", 0},
+    {"macro", 0},
+    {"concat", 0},
+    {"flat", 0},
+    {"join", 0},
+    {"shuffle", 0},
+    // variable
+    {"for", 0},
+    {"for*", 0},
+    {"map", 0},
+    {"map*", 0},
+    {"i-map", 0},
+    {"i-map*", 0},
+    {"iter", 0},
+    {"reduce", 0},
+    {"while", 0},
+    {"do", 0},
+    // operator
+    {"+", 0},
+    {"-", 0},
+    {"*", 0},
+    {"×", 0},
+    {"/", 0},
+    {"÷", 0},
+    {"%", 0},
+    {"<", 0},
+    {"<=", 0},
+    {"≤", 0},
+    {">", 0},
+    {">=", 0},
+    {"≥", 0},
+    {"=", 0},
+    {"!=", 0},
+    {"≠", 0},
+    {0, 0},
+  };
+
+  assert(sizeof(pair_t) == 8);
+  assert(sizeof(value_t) == 4);
+  assert((Integer(1)).data == 1);
+  assert((Integer(0)).data == 0);
+  assert((Integer(-1)).data == -1);
+  value_t numbers = List(Integer(1), Integer(2), Integer(3), Integer(4));
+  value_t tim = List(
+    Mapping(name, Symbol("Tim")),
+    Mapping(age, Integer(34)),
+    Mapping(isProgrammer, True)
+  );
+  value_t jack = List(
+    Mapping(name, Symbol("Jack")),
+    Mapping(age, Integer(10)),
+    Mapping(isProgrammer, True)
+  );
+  print("tim.name: ");
+  dump(mget(tim, Symbol("name")));
+  print("tim.age: ");
+  dump(mget(tim, Symbol("age")));
+  print("tim.isProgrammer: ");
+  dump(mget(tim, Symbol("isProgrammer")));
+  print("tim.wat: ");
+  dump(mget(tim, Symbol("wat")));
+  print("has name: ");
+  dump(mhas(tim, Symbol("name")));
+  print("has wat: ");
+  dump(mhas(tim, Symbol("wat")));
+  print("set name: ");
+  dump(tim = mset(tim, Symbol("name"), Symbol("Timbo")));
+  print("set 42: ");
+  dump(tim = mset(tim, Integer(42), True));
+  print("set 42 on empty: ");
+  dump(mset(Nil, Integer(42), True));
+  dump(tim);
+  dump(numbers);
+  dump(cdr(numbers));
+  dump(cdr(cdr(numbers)));
+  dump(cdr(cdr(cdr(numbers))));
+  dump(cdr(cdr(cdr(cdr(numbers)))));
+  dump(cdr(cdr(cdr(cdr(cdr(numbers))))));
+  dump(tim);
+  dump(car(tim));
+  dump(cdr(tim));
+  dump(cons(tim, jack));
+  dump(cons(jack, tim));
+  print("Append tim and jack: ");
+  dump(append(tim, jack));
+  print("Just tim: ");
+  dump(tim);
+  print("Reverse tim: ");
+  dump(reverse(tim));
+  print("Reverse numbers: ");
+  dump(reverse(numbers));
+  dump(reverse(cdr(numbers)));
+  dump(reverse(cddr(numbers)));
+  dump(reverse(cdddr(numbers)));
+  dump(reverse(cddddr(numbers)));
+  dump(cons(
+    Symbol("+"),
+    cons(
+      Integer(1),
+      cons(
+        Integer(2),
+        True
+      )
+    )
+  ));
+  dump(List(
+    Symbol("def"),
+    Symbol("sequence"),
+    List(
+      Symbol("shuffle"),
+      List(
+        Symbol("concat"),
+        List(
+          Symbol("map"),
+          List(
+            Symbol("i"),
+            Symbol("size"),
+          ),
+          List(
+            Symbol("if"),
+            List(
+              Symbol("<"),
+              List(
+                Symbol("%"),
+                Symbol("i"),
+                Symbol("width")
+              ),
+              Symbol("ww")
+            ),
+            List(
+              Symbol("list"),
+              True,
+              Symbol("i")
+            )
+          )
+        ),
+        List(
+          Symbol("map"),
+          List(
+            Symbol("i"),
+            Symbol("size"),
+          ),
+          List(
+            Symbol("if"),
+            List(
+              Symbol("<"),
+              List(
+                Symbol("÷"),
+                Symbol("i"),
+                Symbol("width")
+              ),
+              Symbol("hh")
+            ),
+            List(
+              Symbol("list"),
+              False,
+              Symbol("i")
+            )
+          )
+        )
+      )
+    )
+  ));
+
+  dump(List(
+    Symbol("def"),
+    Symbol("add"),
+    List(
+      Symbol("a"),
+      Symbol("b")
+    ),
+    List(
+      Symbol("+"),
+      Symbol("a"),
+      Symbol("b")
+    )
+  ));
+
+
+  while (editor_step());
+
   return 0;
+
 }

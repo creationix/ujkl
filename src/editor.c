@@ -1,9 +1,13 @@
-#ifndef LINE_READER_C
-#define LINE_READER_C
+#ifndef EDITOR_C
+#define EDITOR_C
 #include <termios.h>
 #include <stdlib.h>
 #include <signal.h>
-#include "write-buffer.c"
+#include "print.c"
+
+#ifndef MAX_LINE_LENGTH
+#define MAX_LINE_LENGTH 80
+#endif
 
 typedef struct line_s {
   int x;
@@ -28,20 +32,20 @@ static struct termios old_tio, new_tio;
 static bool moveLeft(int n) {
   if (n == 0) return true;
   current.x -= n;
-  writeCString("\33[");
-  writeInt(n);
-  writeChar('D');
-  writeFlush();
+  print("\33[");
+  print_int(n);
+  print_char('D');
+  print_flush();
   return true;
 }
 
 static bool moveRight(int n) {
   if (n == 0) return true;
   current.x += n;
-  writeCString("\33[");
-  writeInt(n);
-  writeChar('C');
-  writeFlush();
+  print("\33[");
+  print_int(n);
+  print_char('C');
+  print_flush();
   return true;
 }
 
@@ -84,8 +88,7 @@ static bool handleChar(char c) {
 
     // Handle Enter
     if (c == 10) {
-      writeCString("\r\n");
-      writeFlush();
+      print("\r\n");
       if (current.length) {
         current.line[current.length] = 0;
         onLine(current.line);
@@ -99,10 +102,9 @@ static bool handleChar(char c) {
       goto refresh;
     }
     // Uncomment to see unhandled codes
-    // writeCString("\ncode ");
-    // writeInt(c);
-    // writeChar('\n');
-    // writeFlush();
+    // print("\ncode ");
+    // print_int(c);
+    // print_char('\n');
     return true;
   case ESC:
     if (c == '[') {
@@ -169,15 +171,14 @@ static bool handleChar(char c) {
         return true;
 
       default:
-        writeChar('\n');
-        writeInt(c);
-        writeChar(':');
+        print_char('\n');
+        print_int(c);
+        print_char(':');
         for (int i = 0; i <= csi_num; i++) {
-          writeChar(' ');
-          writeInt(csi_args[i]);
+          print_char(' ');
+          print_int(csi_args[i]);
         }
-        writeChar('\n');
-        writeFlush();
+        print_char('\n');
         break;
       }
     }
@@ -195,7 +196,7 @@ static bool handleChar(char c) {
       i--;
     }
     current.line[current.x] = c;
-    if (current.x < MAX_LINE_LENGTH - 1) {
+    if (current.x < MAX_LINE_LENGTH) {
       current.x++;
     }
     if (current.length < MAX_LINE_LENGTH) {
@@ -227,34 +228,29 @@ static bool handleChar(char c) {
   goto refresh;
 
   refresh:
-    writeCString("\r\33[K");
-    writeCString((const char*)prompt);
-    writeString(current.line, current.length);
+    print("\r\33[K");
+    print((const char*)prompt);
+    print_string(current.line, current.length);
     if (current.x < current.length) {
-      writeCString("\33[");
-      writeInt((current.length - current.x));
-      writeChar('D');
+      print("\33[");
+      print_int((current.length - current.x));
+      print_char('D');
     }
-    writeFlush();
+    print_flush();
     return true;
 }
 
-void stopEditor() {
-  write(1, "\n", 1);
-  /* restore the former settings */
-	tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+static void onInt(int sig);
 
-}
+static bool started;
+static bool finished;
 
-static void onInt(int sig) {
-  if (sig == SIGINT) {
-    write(1, "^C", 2);
-    stopEditor();
-    exit(0);
+static void editor_start() {
+  started = true;
+  if (!(prompt && onLine)) {
+    print("***Must set prompt and onLine***\n");
+    exit(-1);
   }
-}
-
-void startEditor() {
 	tcgetattr(STDIN_FILENO, &old_tio);
 	new_tio = old_tio;
 	/* disable canonical mode (buffered i/o) and local echo */
@@ -264,10 +260,29 @@ void startEditor() {
   handleChar(0);
 }
 
-bool stepEditor() {
+static void editor_stop() {
+  finished = true;
+  print_char('\n');
+  /* restore the former settings */
+	tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+}
+
+API bool editor_step() {
+  if (finished) return false;
+  if (!started) editor_start();
   char c;
   read(0, &c, 1);
-  return handleChar(c);
+  if(handleChar(c)) return true;
+  editor_stop();
+  return false;
+}
+
+static void onInt(int sig) {
+  if (sig == SIGINT) {
+    write(1, "^C", 2);
+    editor_stop();
+    exit(0);
+  }
 }
 
 #endif
