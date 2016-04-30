@@ -93,11 +93,7 @@ API value_t eval(value_t env, value_t expr) {
       value_t body = cdr(fn);
       expr = Undefined;
       while (body.type == PairType) {
-        print(" fn1:");
-        dump(fn);
         expr = eval(subEnv, car(body));
-        print(" fn2:");
-        dump(fn);
         body = cdr(body);
       }
     }
