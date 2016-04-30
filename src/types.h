@@ -85,7 +85,6 @@ API void dump_line(value_t val);
 #define Nil ((value_t){.type = AtomType,.data = -1})
 #define False ((value_t){.type = AtomType,.data = 0})
 #define True ((value_t){.type = AtomType,.data = 1})
-API value_t Bool(bool val);
 API value_t Integer(int32_t val);
 API value_t Symbol(const char* sym);
 API value_t SymbolRange(const char* start, const char* end);
@@ -108,14 +107,14 @@ API value_t cons(value_t left, value_t right);
 
 #define Mapping(name, value) cons(Symbol(#name),value)
 
-API value_t append(value_t left, value_t right);
+// API value_t append(value_t left, value_t right);
 API value_t reverse(value_t src);
 API value_t mget(value_t map, value_t key);
 API value_t mhas(value_t map, value_t key);
 API value_t mset(value_t map, value_t key, value_t value);
 
 API pair_t getPair(value_t slot);
-API bool setPair(value_t slot, pair_t pair);
+// API bool setPair(value_t slot, pair_t pair);
 
 #define caar(var) car(car(var))
 #define cadr(var) cdr(car(var))

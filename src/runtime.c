@@ -6,11 +6,40 @@
 // input is (environment . args)
 // where environment is a map and args is a cons list
 
-
 #ifdef TRACE
 static int indent = 0;
 static const char *space = "                                                  ";
+
+#ifdef TRACE_FULL
+static void print_type(value_t val, int depth) {
+  switch (val.type) {
+    case PairType: print("Pair"); break;
+    case AtomType: print("Atom"); break;
+    case IntegerType: print("Integer"); break;
+    case SymbolType: print("Symbol"); break;
+  }
+  print_char(':');
+  print_int(val.data);
+  if (val.type == PairType && depth >= 0) {
+    pair_t pair = getPair(val);
+    print_char('<');
+    print_type(pair.left, depth - 1);
+    print_char(' ');
+    print_type(pair.right, depth - 1);
+    print_char('>');
+  }
+}
+
+static void full_dump(value_t val) {
+  print_type(val,2);
+  print(" ");
+  dump(val);
+}
+#else
+#define full_dump dump
 #endif
+#endif
+
 
 API value_t eval(value_t env, value_t expr) {
 
@@ -20,27 +49,32 @@ API value_t eval(value_t env, value_t expr) {
   // dump(env);
   print_string(space, indent);
   print("in:  ");
-  dump(expr);
+  full_dump(expr);
   indent++;
 #endif
 
+  // Resolve user variables to entry in environment.
+  // Builtins return themselves.
   if (expr.type == SymbolType) {
-    // User symbols look up value in environment,
-    // builtins return themselves.
-    expr =  expr.data < 0 ? mget(env, expr) : expr;
+    expr = expr.data < 0 ? mget(env, expr) : expr;
   }
+
   else if (expr.type == PairType) {
     value_t fn = eval(env, car(expr));
+
     // Native function.
     if (fn.type == SymbolType && fn.data >= 0) {
-      expr = symbols_get_fn(fn.data)(env, cdr(expr));
+      api_fn native = symbols_get_fn(fn.data);
+      expr = native(env, cdr(expr));
     }
+
+    // User defined function.
     else {
-      expr = cdr(expr);
-      // Apply arguments to parameters
+      // Create a new empty environment (no closures for now)
       value_t subEnv = Nil;
+      // Apply arguments to parameters
       value_t params = car(fn);
-      value_t args = expr;
+      value_t args = cdr(expr);
       while (params.type == PairType) {
         value_t name = car(params);
         value_t value;
@@ -54,10 +88,16 @@ API value_t eval(value_t env, value_t expr) {
         subEnv = mset(subEnv, name, value);
         params = cdr(params);
       }
+
+      // Run each value in the body one at a time returning the last value
       value_t body = cdr(fn);
       expr = Undefined;
       while (body.type == PairType) {
+        print(" fn1:");
+        dump(fn);
         expr = eval(subEnv, car(body));
+        print(" fn2:");
+        dump(fn);
         body = cdr(body);
       }
     }
@@ -66,7 +106,7 @@ API value_t eval(value_t env, value_t expr) {
   indent--;
   print_string(space, indent);
   print("out: ");
-  dump(expr);
+  full_dump(expr);
 #endif
   return expr;
 }

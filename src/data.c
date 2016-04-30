@@ -17,18 +17,12 @@ API pair_t getPair(value_t slot) {
   return (slot.type == PairType) ? pairs[slot.data] : Free;
 }
 
-API bool setPair(value_t slot, pair_t pair) {
-  if (slot.type != PairType) return false;
-  pairs[slot.data] = pair;
-  return true;
-}
+// API bool setPair(value_t slot, pair_t pair) {
+//   if (slot.type != PairType) return false;
+//   pairs[slot.data] = pair;
+//   return true;
+// }
 
-API value_t Bool(bool val) {
-  return (value_t){
-    .type = AtomType,
-    .data = val ? 1 : 0
-  };
-}
 API value_t Integer(int32_t val) {
   return (value_t){
     .type = IntegerType,
@@ -110,23 +104,23 @@ API value_t cons(value_t left, value_t right) {
 }
 
 
-// Append right to left (mutating left)
-// returns left for convenience
-API value_t append(value_t left, value_t right) {
-  if (isNil(left)) return right;
-  if (isNil(right)) return left;
-  if (left.type != PairType) return Undefined;
-  value_t node = left;
-  pair_t pair = pairs[left.data];
-  while (pair.right.type == PairType) {
-    node = pair.right;
-    pair = pairs[node.data];
-  }
-  if (!isNil(pair.right)) return Undefined;
-  pair.right = right;
-  pairs[node.data].raw = pair.raw;
-  return left;
-}
+// // Append right to left (mutating left)
+// // returns left for convenience
+// API value_t append(value_t left, value_t right) {
+//   if (isNil(left)) return right;
+//   if (isNil(right)) return left;
+//   if (left.type != PairType) return Undefined;
+//   value_t node = left;
+//   pair_t pair = pairs[left.data];
+//   while (pair.right.type == PairType) {
+//     node = pair.right;
+//     pair = pairs[node.data];
+//   }
+//   if (!isNil(pair.right)) return Undefined;
+//   pair.right = right;
+//   pairs[node.data].raw = pair.raw;
+//   return left;
+// }
 
 // create a new list that is reverse of given list
 API value_t reverse(value_t src) {
