@@ -136,6 +136,41 @@ API value_t reverse(value_t src) {
   return cons(pair.left, dst);
 }
 
+API value_t ilen(value_t list) {
+  int len = 0;
+  while (list.type == PairType) {
+    len++;
+    list = cdr(list);
+  }
+  return Integer(len);
+}
+
+API value_t iget(value_t list, value_t key) {
+  if (key.type != IntegerType) return Undefined;
+  int index = key.data;
+  if (index < 0) return Undefined;
+  value_t node = list;
+  while (index--) { node = cdr(node); }
+  return car(node);
+}
+
+API value_t iset(value_t list, value_t key, value_t value) {
+  if (key.type != IntegerType) return Undefined;
+  int index = key.data;
+  if (index < 0) return Undefined;
+  if (list.type != PairType) return Undefined;
+  pair_t pair = pairs[list.data];
+  value_t node = list;
+  while (index--) {
+    node = pair.right;
+    if (node.type != PairType) return Undefined;
+    pair = pairs[node.data];
+  }
+  pair.left = value;
+  pairs[node.data] = pair;
+  return key;
+}
+
 API value_t mget(value_t map, value_t key) {
   value_t node = map;
   while (node.type == PairType) {

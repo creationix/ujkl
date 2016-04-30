@@ -109,6 +109,9 @@ API value_t cons(value_t left, value_t right);
 
 // API value_t append(value_t left, value_t right);
 API value_t reverse(value_t src);
+API value_t ilen(value_t list);
+API value_t iget(value_t list, value_t key);
+API value_t iset(value_t list, value_t key, value_t value);
 API value_t mget(value_t map, value_t key);
 API value_t mhas(value_t map, value_t key);
 API value_t mset(value_t map, value_t key, value_t value);
@@ -147,6 +150,15 @@ API pair_t getPair(value_t slot);
 
 API value_t eval(value_t env, value_t expr);
 
+#define var1(env, args, a)       \
+  value_t a = eval(env, car(args));
+
+#define fn1(name, a, body) \
+static value_t name(value_t env, value_t args) { \
+  var1(env, args, a) \
+  body \
+}
+
 
 #define var2(env, args, a, b)       \
   value_t a = eval(env, car(args)); \
@@ -165,7 +177,6 @@ static value_t name(value_t env, value_t args) { \
   value_t b = eval(env, car(args)); \
   args = cdr(args);                 \
   value_t c = eval(env, car(args));
-
 
 #define fn3(name, a, b, c, body) \
 static value_t name(value_t env, value_t args) { \

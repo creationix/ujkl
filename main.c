@@ -250,6 +250,9 @@ static value_t _print(value_t env, value_t args) {
   return Nil;
 }
 
+fn1(_ilen, list, return ilen(list);)
+fn2(_iget, list, key, return iget(list, key);)
+fn3(_iset, list, key, value, return iset(list, key, value);)
 fn2(_mget, map, key, return mget(map, key);)
 fn3(_mset, map, key, value, return mset(map, key, value);)
 fn2(_mhas, map, key, return mhas(map, key);)
@@ -264,6 +267,9 @@ static const builtin_t *functions = (const builtin_t[]){
   {"-", _sub},
   {"*", _mul},
   {"/", _div},
+  {"ilen", _ilen},
+  {"iget", _iget},
+  {"iset", _iset},
   {"mget", _mget},
   {"mset", _mset},
   {"mhas", _mhas},
