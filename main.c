@@ -117,7 +117,7 @@ static void parse(const char *data) {
           start[2] == 'l' &&
           start[3] == 's' &&
           start[4] == 'e') {
-        atom = True;
+        atom = False;
       }
       else {
         atom = SymbolRange(start, data);
