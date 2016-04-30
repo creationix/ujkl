@@ -4,6 +4,7 @@
 #define SYMBOLS_BLOCK_SIZE 128
 #define PAIRS_BLOCK_SIZE 16
 #define THEME tim
+// #define TRACE
 #define API static
 
 #include "src/data.c"
@@ -162,9 +163,10 @@ static value_t _quote(value_t env, value_t args) {
 
 // Define a function
 static value_t _def(value_t env, value_t args) {
+  value_t key = car(args);
   value_t fn = cdr(args);
-  mset(env, car(args), fn);
-  return fn;
+  mset(env, key, fn);
+  return key;
 }
 
 static value_t _set(value_t env, value_t args) {
