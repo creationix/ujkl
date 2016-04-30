@@ -73,9 +73,12 @@ API api_fn symbols_get_fn(int index);
 
 // Prints a value to stdout with newline
 API void dump(value_t val);
+// Prints multiple values with spaces between them
+API void dump_line(value_t val);
 
 // Heap management
 
+#define Dot ((value_t){.type = AtomType, .data = -3})
 #define Undefined ((value_t){.type = AtomType, .data = -2})
 #define Free ((pair_t){.raw = ~0ul})
 #define Nil ((value_t){.type = AtomType,.data = -1})
@@ -84,6 +87,7 @@ API void dump(value_t val);
 API value_t Bool(bool val);
 API value_t Integer(int32_t val);
 API value_t Symbol(const char* sym);
+API value_t SymbolRange(const char* start, const char* end);
 
 API bool eq(value_t a, value_t b);
 API bool isNil(value_t value);

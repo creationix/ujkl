@@ -43,6 +43,13 @@ API value_t Symbol(const char* sym) {
   };
 }
 
+API value_t SymbolRange(const char* sym, const char* end) {
+  return (value_t){
+    .type = SymbolType,
+    .data = symbols_set(sym, end - sym)
+  };
+}
+
 API bool eq(value_t a, value_t b) {
   return a.raw == b.raw;
 }
