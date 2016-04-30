@@ -1,4 +1,3 @@
-#include <assert.h>
 
 #define VM_VERSION "MonkeyRocker"
 #define SYMBOLS_BLOCK_SIZE 128
@@ -13,8 +12,6 @@
 #include "src/print.c"
 #include "src/runtime.c"
 #include "src/symbols.c"
-
-#include "test.c"
 
 static value_t repl;
 
@@ -146,13 +143,14 @@ static void parse(const char *data) {
 static value_t _list(value_t env, value_t args) {
   (void)(env);
   value_t node = args;
+  value_t res = Nil;
+  // TODO: find a way to implement this thas doesn't cause so much GC pressure.
   while (node.type == PairType) {
     pair_t pair = getPair(node);
-    pair.left = eval(env, pair.left);
-    setPair(node, pair);
+    res = cons(eval(env, pair.left), res);
     node = pair.right;
   }
-  return args;
+  return reverse(res);
 }
 
 // Passed values through unaffected
@@ -178,11 +176,11 @@ static value_t _set(value_t env, value_t args) {
 
 static value_t _add(value_t env, value_t args) {
   int sum = 0;
-  args = _list(env, args);
   while (args.type == PairType) {
     pair_t pair = getPair(args);
-    if (pair.left.type == IntegerType) {
-      sum += pair.left.data;
+    value_t value = eval(env, pair.left);
+    if (value.type == IntegerType) {
+      sum += value.data;
     }
     args = pair.right;
   }
@@ -191,17 +189,17 @@ static value_t _add(value_t env, value_t args) {
 
 static value_t _sub(value_t env, value_t args) {
   int sum;
-  args = _list(env, args);
   bool first = true;
   while (args.type == PairType) {
     pair_t pair = getPair(args);
-    if (pair.left.type == IntegerType) {
+    value_t value = eval(env, pair.left);
+    if (value.type == IntegerType) {
       if (first) {
         first = false;
-        sum = pair.left.data;
+        sum = value.data;
       }
       else {
-        sum -= pair.left.data;
+        sum -= value.data;
       }
     }
     args = pair.right;
@@ -211,11 +209,11 @@ static value_t _sub(value_t env, value_t args) {
 
 static value_t _mul(value_t env, value_t args) {
   int sum = 1;
-  args = _list(env, args);
   while (args.type == PairType) {
     pair_t pair = getPair(args);
-    if (pair.left.type == IntegerType) {
-      sum *= pair.left.data;
+    value_t value = eval(env, pair.left);
+    if (value.type == IntegerType) {
+      sum *= value.data;
     }
     args = pair.right;
   }
@@ -224,17 +222,17 @@ static value_t _mul(value_t env, value_t args) {
 
 static value_t _div(value_t env, value_t args) {
   int sum;
-  args = _list(env, args);
   bool first = true;
   while (args.type == PairType) {
     pair_t pair = getPair(args);
-    if (pair.left.type == IntegerType) {
+    value_t value = eval(env, pair.left);
+    if (value.type == IntegerType) {
       if (first) {
         first = false;
-        sum = pair.left.data;
+        sum = value.data;
       }
       else {
-        sum /= pair.left.data;
+        sum /= value.data;
       }
     }
     else {
@@ -257,6 +255,7 @@ fn3(_mset, map, key, value, return mset(map, key, value);)
 fn2(_mhas, map, key, return mhas(map, key);)
 
 static const builtin_t *functions = (const builtin_t[]){
+  {"eval", eval},
   {"list", _list},
   {"quote", _quote},
   {"def", _def},
@@ -279,15 +278,25 @@ int main() {
   listSym = Symbol("list");
 
   // Initialize repl environment with a version variable and ref to self.
-  repl = List(
-    Mapping(version,Symbol(VM_VERSION)),
-    Mapping(env,Nil)
-  );
-  mset(repl, Symbol("env"),repl);
+  repl = mset(Nil, Symbol("env"), Nil);
+  mset(repl, Symbol("env"), repl);
+  mset(repl, Symbol("version"), Symbol(VM_VERSION));
 
-  // Initialize the repl prompt and callback
+  const value_t *expressions = (const value_t[]){
+    List(Symbol("+"), Integer(1), Integer(2)),
+    List(Symbol("quote"), Symbol("Hello"), Symbol("world!")),
+    Nil,
+  };
+
+  for (int i = 0; !isNil(expressions[i]); i++) {
+    print("> ");
+    dump(expressions[i]);
+    dump(eval(repl, expressions[i]));
+  }
+
+
+  // Start the repl
   prompt = "> ";
   onLine = parse;
-  // Run the line editor
   while (editor_step());
 }
