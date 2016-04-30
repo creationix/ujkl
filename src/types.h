@@ -18,7 +18,7 @@
 #endif
 
 #ifndef MAX_LINE_LENGTH
-#define MAX_LINE_LENGTH 80
+#define MAX_LINE_LENGTH 78
 #endif
 
 #ifndef WRITE_BUFFER_LENGTH

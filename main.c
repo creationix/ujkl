@@ -155,6 +155,11 @@ static const builtin_t *functions = (const builtin_t[]){
 int main() {
   symbols_init(functions);
 
+  for (int i = 0; i < MAX_LINE_LENGTH; i++) {
+    print_char('#');
+  }
+  print_char('\n');
+
   value_t env = List(
     Mapping(name, Symbol("Tim")),
     Mapping(age, Integer(34)),
