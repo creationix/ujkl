@@ -61,8 +61,6 @@ void test() {
   dump(reverse(numbers));
   dump(reverse(cdr(numbers)));
   dump(reverse(cddr(numbers)));
-  dump(reverse(cdddr(numbers)));
-  dump(reverse(cddddr(numbers)));
   value_t add = cons(
     Symbol("+"),
     cons(

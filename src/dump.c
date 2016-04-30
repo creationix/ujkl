@@ -46,7 +46,15 @@
   #define CPAREN "\x1b[1;30m"
   #define CSEP "\x1b[1;34m"
 #endif
-static void _dump(value_t val) {
+
+static value_t listSym, quoteSym;
+static void _dump(value_t val, value_t seen) {
+  static bool first = true;
+  if (first) {
+    first = false;
+    listSym = Symbol("list");
+    quoteSym = Symbol("quote");
+  }
   switch (val.type) {
     case AtomType:
       switch (val.data) {
@@ -65,35 +73,68 @@ static void _dump(value_t val) {
       print(symbols_get_name(val.data));
       return;
     case PairType: {
+      value_t node = seen;
+      while (node.type == PairType) {
+        if (eq(car(node), val)) {
+          print(CPAREN"("CSEP"..."CPAREN")");
+          return;
+        }
+        node = cdr(node);
+      }
+      seen = cons(val, seen);
       pair_t pair = getPair(val);
-      print(CPAREN"(");
+      const char *opener, *closer;
+      if (eq(pair.left, quoteSym)) {
+        if (pair.right.type != PairType) {
+          print(CPAREN"'");
+          _dump(pair.right, seen);
+          return;
+        }
+        opener = "'(";
+        closer = ")";
+        val = pair.right;
+        pair = getPair(val);
+      }
+      else if (eq(pair.left, listSym) && pair.right.type == PairType) {
+        opener = "[";
+        closer = "]";
+        val = pair.right;
+        pair = getPair(val);
+      }
+      else {
+        opener = "(";
+        closer = ")";
+      }
+      print(CPAREN);
+      print(opener);
       if (isNil(pair.right)) {
-        _dump(pair.left);
+        _dump(pair.left, seen);
       }
       else if (pair.right.type == PairType) {
-        _dump(pair.left);
+        _dump(pair.left, seen);
         while (pair.right.type == PairType) {
           print_char(' ');
           pair = getPair(pair.right);
-          _dump(pair.left);
+          _dump(pair.left, seen);
         }
         if (!isNil(pair.right)) {
           print(CSEP" . ");
-          _dump(pair.right);
+          _dump(pair.right, seen);
         }
       } else {
-        _dump(pair.left);
+        _dump(pair.left, seen);
         print(CSEP" . ");
-        _dump(pair.right);
+        _dump(pair.right, seen);
       }
-      print(CPAREN")");
+      print(CPAREN);
+      print(closer);
       return;
     }
   }
 }
 
 API void dump(value_t val) {
-  _dump(val);
+  _dump(val, Nil);
   print(COFF"\n");
 }
 

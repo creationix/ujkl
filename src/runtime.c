@@ -36,8 +36,30 @@ API value_t eval(value_t env, value_t expr) {
       expr = symbols_get_fn(fn.data)(env, cdr(expr));
     }
     else {
-      // TODO: interpret user-defined function instance
+      expr = cdr(expr);
+      // Apply arguments to parameters
+      value_t subEnv = Nil;
+      value_t params = car(fn);
+      value_t args = expr;
+      while (params.type == PairType) {
+        value_t name = car(params);
+        value_t value;
+        if (args.type == PairType) {
+          value = eval(env, car(args));
+          args = cdr(args);
+        }
+        else {
+          value = Undefined;
+        }
+        subEnv = mset(subEnv, name, value);
+        params = cdr(params);
+      }
+      value_t body = cdr(fn);
       expr = Undefined;
+      while (body.type == PairType) {
+        expr = eval(subEnv, car(body));
+        body = cdr(body);
+      }
     }
   }
 #ifdef TRACE

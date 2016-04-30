@@ -113,50 +113,59 @@ API pair_t getPair(value_t slot);
 API bool setPair(value_t slot, pair_t pair);
 
 #define caar(var) car(car(var))
-#define cadr(var) car(cdr(var))
-#define cdar(var) cdr(car(var))
+#define cadr(var) cdr(car(var))
+#define cdar(var) car(cdr(var))
 #define cddr(var) cdr(cdr(var))
-#define caaar(var) car(car(car(var)))
-#define caadr(var) car(car(cdr(var)))
-#define cadar(var) car(cdr(car(var)))
-#define caddr(var) car(cdr(cdr(var)))
-#define cdaar(var) cdr(car(car(var)))
-#define cdadr(var) cdr(car(cdr(var)))
-#define cddar(var) cdr(cdr(car(var)))
-#define cdddr(var) cdr(cdr(cdr(var)))
-#define caaaar(var) car(car(car(car(var))))
-#define caaadr(var) car(car(car(cdr(var))))
-#define caadar(var) car(car(cdr(car(var))))
-#define caaddr(var) car(car(cdr(cdr(var))))
-#define cadaar(var) car(cdr(car(car(var))))
-#define cadadr(var) car(cdr(car(cdr(var))))
-#define caddar(var) car(cdr(cdr(car(var))))
-#define cadddr(var) car(cdr(cdr(cdr(var))))
-#define cdaaar(var) cdr(car(car(car(var))))
-#define cdaadr(var) cdr(car(car(cdr(var))))
-#define cdadar(var) cdr(car(cdr(car(var))))
-#define cdaddr(var) cdr(car(cdr(cdr(var))))
-#define cddaar(var) cdr(cdr(car(car(var))))
-#define cddadr(var) cdr(cdr(car(cdr(var))))
-#define cdddar(var) cdr(cdr(cdr(car(var))))
-#define cddddr(var) cdr(cdr(cdr(cdr(var))))
+// #define caaar(var) car(car(car(var)))
+// #define caadr(var) car(car(cdr(var)))
+// #define cadar(var) car(cdr(car(var)))
+// #define caddr(var) car(cdr(cdr(var)))
+// #define cdaar(var) cdr(car(car(var)))
+// #define cdadr(var) cdr(car(cdr(var)))
+// #define cddar(var) cdr(cdr(car(var)))
+// #define cdddr(var) cdr(cdr(cdr(var)))
+// #define caaaar(var) car(car(car(car(var))))
+// #define caaadr(var) car(car(car(cdr(var))))
+// #define caadar(var) car(car(cdr(car(var))))
+// #define caaddr(var) car(car(cdr(cdr(var))))
+// #define cadaar(var) car(cdr(car(car(var))))
+// #define cadadr(var) car(cdr(car(cdr(var))))
+// #define caddar(var) car(cdr(cdr(car(var))))
+// #define cadddr(var) car(cdr(cdr(cdr(var))))
+// #define cdaaar(var) cdr(car(car(car(var))))
+// #define cdaadr(var) cdr(car(car(cdr(var))))
+// #define cdadar(var) cdr(car(cdr(car(var))))
+// #define cdaddr(var) cdr(car(cdr(cdr(var))))
+// #define cddaar(var) cdr(cdr(car(car(var))))
+// #define cddadr(var) cdr(cdr(car(cdr(var))))
+// #define cdddar(var) cdr(cdr(cdr(car(var))))
+// #define cddddr(var) cdr(cdr(cdr(cdr(var))))
 
+API value_t eval(value_t env, value_t expr);
+
+
+#define var2(env, args, a, b)       \
+  value_t a = eval(env, car(args)); \
+  args = cdr(args);                 \
+  value_t b = eval(env, car(args));
 
 #define fn2(name, a, b, body) \
 static value_t name(value_t env, value_t args) { \
-  value_t a = eval(env, car(args)); \
-  args = cdr(args);                 \
-  value_t b = eval(env, car(args)); \
+  var2(env, args, a, b) \
   body \
 }
 
-#define fn3(name, a, b, c, body) \
-static value_t name(value_t env, value_t args) { \
+#define var3(env, args, a, b, c)    \
   value_t a = eval(env, car(args)); \
   args = cdr(args);                 \
   value_t b = eval(env, car(args)); \
   args = cdr(args);                 \
-  value_t c = eval(env, car(args)); \
+  value_t c = eval(env, car(args));
+
+
+#define fn3(name, a, b, c, body) \
+static value_t name(value_t env, value_t args) { \
+  var3(env, args, a, b, c) \
   body \
 }
 
