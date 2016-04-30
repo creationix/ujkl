@@ -47,7 +47,9 @@
   #define CSEP "\x1b[1;34m"
 #endif
 
-static void _dump(value_t val, value_t seen) {
+static value_t seen;
+
+static void _dump(value_t val) {
   switch (val.type) {
     case AtomType:
       switch (val.data) {
@@ -80,7 +82,7 @@ static void _dump(value_t val, value_t seen) {
       if (eq(pair.left, quoteSym)) {
         if (pair.right.type != PairType) {
           print(CPAREN"'");
-          _dump(pair.right, seen);
+          _dump(pair.right);
           return;
         }
         opener = "'(";
@@ -101,23 +103,23 @@ static void _dump(value_t val, value_t seen) {
       print(CPAREN);
       print(opener);
       if (isNil(pair.right)) {
-        _dump(pair.left, seen);
+        _dump(pair.left);
       }
       else if (pair.right.type == PairType) {
-        _dump(pair.left, seen);
+        _dump(pair.left);
         while (pair.right.type == PairType) {
           print_char(' ');
           pair = getPair(pair.right);
-          _dump(pair.left, seen);
+          _dump(pair.left);
         }
         if (!isNil(pair.right)) {
           print(CSEP" . ");
-          _dump(pair.right, seen);
+          _dump(pair.right);
         }
       } else {
-        _dump(pair.left, seen);
+        _dump(pair.left);
         print(CSEP" . ");
-        _dump(pair.right, seen);
+        _dump(pair.right);
       }
       print(CPAREN);
       print(closer);
@@ -127,19 +129,22 @@ static void _dump(value_t val, value_t seen) {
 }
 
 API void dump(value_t val) {
-  _dump(val, Nil);
+  seen = Nil;
+  _dump(val);
   print(COFF"\n");
 }
 
 API void dump_line(value_t val) {
   if (val.type == PairType) {
     pair_t pair = getPair(val);
-    _dump(pair.left, Nil);
+    seen = Nil;
+    _dump(pair.left);
     val = pair.right;
     while (val.type == PairType) {
       print_char(' ');
       pair_t pair = getPair(val);
-      _dump(pair.left, Nil);
+      seen = Nil;
+      _dump(pair.left);
       val = pair.right;
     }
   }
