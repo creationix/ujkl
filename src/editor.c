@@ -83,7 +83,6 @@ static bool handleChar(char c) {
 
     // Handle Enter
     if (c == 10) {
-      print("\r\n");
       if (current.length) {
         current.line[current.length] = 0;
         onLine(current.line);

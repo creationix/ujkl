@@ -138,4 +138,19 @@ API void dump(value_t val) {
   print(COFF"\n");
 }
 
+API void dump_line(value_t val) {
+  if (val.type == PairType) {
+    pair_t pair = getPair(val);
+    _dump(pair.left, Nil);
+    val = pair.right;
+    while (val.type == PairType) {
+      print_char(' ');
+      pair_t pair = getPair(val);
+      _dump(pair.left, Nil);
+      val = pair.right;
+    }
+  }
+  print(COFF"\n");
+}
+
 #endif
