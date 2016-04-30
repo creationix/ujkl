@@ -146,4 +146,62 @@ void test() {
     )
   ));
 
+  value_t env = List(
+    Mapping(name, Symbol("Tim")),
+    Mapping(age, Integer(34)),
+    Mapping(isProgrammer, True)
+  );
+  env = cons(cons(Symbol("tim"),env),env);
+  // mset(env, Symbol("tim"), env);
+  mset(env, Symbol("add"), Symbol("+"));
+
+  print("env: ");
+  dump(env);
+
+  const value_t *expressions = (const value_t[]){
+    List(Symbol("-"),Integer(5),Integer(2)),
+    List(Symbol("+"),Integer(1),Integer(2),Integer(3)),
+    List(Symbol("add"),Integer(1),Integer(2),Integer(3)),
+    List(Symbol("+"),
+      List(Symbol("*"),Integer(2),Integer(3)),
+      List(Symbol("/"),Integer(10),Integer(3)),
+      Integer(1)
+    ),
+    List(Symbol("+"),Integer(1),Integer(2)),
+    List(Integer(1),Integer(2),Integer(3)),
+    Integer(42),
+    Symbol("+"),
+    Symbol("what"),
+    Symbol("name"),
+    List(Symbol("list"), Symbol("age"), Symbol("isProgrammer")),
+    List(Symbol("quote"), Symbol("age"), Symbol("isProgrammer")),
+    List(Symbol("age"), Symbol("isProgrammer")),
+    Symbol("tim"),
+    List(Symbol("tim")),
+    List(Symbol("def"),
+      Symbol("greet"),
+      List(Symbol("person")),
+      List(Symbol("print"),
+        cons(Symbol("quote"),Symbol("hello")),
+        List(Symbol("mget"),Symbol("person"),cons(Symbol("quote"),Symbol("name"))))
+    ),
+    List(Symbol("set"),
+      Symbol("tim"),
+      List(
+        Symbol("quote"),
+        Mapping(name,Symbol("Tim")),
+        Mapping(age,Integer(34)),
+        Mapping(is-programmer,True)
+      )
+    ),
+    List(Symbol("greet"),Symbol("tim")),
+    cons(Symbol("list"),Integer(42)),
+    Nil,
+  };
+
+  for (int i = 0; !isNil(expressions[i]); i++) {
+    print("> ");
+    dump(expressions[i]);
+    dump(eval(env, expressions[i]));
+  }
 }

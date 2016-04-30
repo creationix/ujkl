@@ -47,14 +47,7 @@
   #define CSEP "\x1b[1;34m"
 #endif
 
-static value_t listSym, quoteSym;
 static void _dump(value_t val, value_t seen) {
-  static bool first = true;
-  if (first) {
-    first = false;
-    listSym = Symbol("list");
-    quoteSym = Symbol("quote");
-  }
   switch (val.type) {
     case AtomType:
       switch (val.data) {

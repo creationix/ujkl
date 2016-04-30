@@ -57,6 +57,7 @@ typedef struct {
   api_fn fn;
 } builtin_t;
 
+API value_t quoteSym, listSym;
 
 // Print library so we don't need a full-blown printf.
 API bool print(const char* value);

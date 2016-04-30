@@ -1,5 +1,6 @@
 #include <assert.h>
 
+#define VM_VERSION "MonkeyRocker"
 #define SYMBOLS_BLOCK_SIZE 128
 #define PAIRS_BLOCK_SIZE 16
 #define THEME tim
@@ -14,9 +15,131 @@
 
 #include "test.c"
 
+static value_t repl;
+
 static void parse(const char *data) {
-  print(data);
-  print_char('\n');
+  value_t stack = Nil;
+  value_t value = Nil;
+  bool quote = false;
+  bool neg = false;
+  while (*data) {
+    // Skip whitespace
+    if (*data == ' ') {
+      data++;
+    }
+    // Push stack when on open paren
+    else if (*data == '(' || *data == '[') {
+      stack = cons(value, stack);
+      value = Nil;
+      if (quote) {
+        quote = false;
+        value = cons(quoteSym, value);
+      }
+      if (*data == '[') {
+        value = cons(listSym, value);
+      }
+      data++;
+    }
+    // pop stack on close paren
+    else if (*data == ')' || *data == ']') {
+      value_t fixed = Nil;
+      bool dot = false;
+      while (value.type == PairType) {
+        value_t slot = car(value);
+        if (eq(slot, Dot)) {
+          dot = true;
+        }
+        else {
+          if (dot) {
+            dot = false;
+            fixed = car(fixed);
+          }
+          fixed = cons(slot, fixed);
+        }
+        value = cdr(value);
+      }
+      value = cons(fixed, car(stack));
+      stack = cdr(stack);
+      data++;
+    }
+    else if (*data == '\'') {
+      quote = true;
+      data++;
+    }
+    else if (*data == '-' && *(data + 1) &&
+             *(data + 1) >= '0' && *(data + 1) <= '9') {
+      neg = true;
+      data++;
+    }
+    else if (*data >= '0' && *data <= '9') {
+      int num = 0;
+      while (*data >= '0' && *data <= '9') {
+        num = num * 10 + *data - '0';
+        data++;
+      }
+      if (neg) {
+        neg = false;
+        num = -num;
+      }
+      value_t atom = Integer(num);
+      if (quote) {
+        quote = false;
+        atom = cons(quoteSym, atom);
+      }
+      value = cons(atom, value);
+    }
+    else {
+      const char* start = data;
+      while (*data && *data != ' ' &&
+             *data != '(' && *data != ')' &&
+             *data != '[' && *data != ']') {
+        data++;
+      }
+      value_t atom;
+      int len = data - start;
+      if (len == 1 && start[0] == '.') {
+        atom = Dot;
+      }
+      else if (len == 3 &&
+          start[0] == 'n' &&
+          start[1] == 'i' &&
+          start[2] == 'l') {
+        atom = Nil;
+      }
+      else if (len == 4 &&
+          start[0] == 't' &&
+          start[1] == 'r' &&
+          start[2] == 'u' &&
+          start[3] == 'e') {
+        atom = True;
+      }
+      else if (len == 5 &&
+          start[0] == 'f' &&
+          start[1] == 'a' &&
+          start[2] == 'l' &&
+          start[3] == 's' &&
+          start[4] == 'e') {
+        atom = True;
+      }
+      else {
+        atom = SymbolRange(start, data);
+      }
+      if (quote) {
+        quote = false;
+        atom = cons(quoteSym, atom);
+      }
+      value = cons(atom, value);
+    }
+  }
+  value = reverse(value);
+
+  print("\r\x1b[K");
+  print(prompt);
+  dump_line(value);
+  while (value.type == PairType) {
+    dump(eval(repl, car(value)));
+    value = cdr(value);
+  }
 }
 
 static value_t _list(value_t env, value_t args) {
@@ -45,9 +168,10 @@ static value_t _def(value_t env, value_t args) {
 }
 
 static value_t _set(value_t env, value_t args) {
+  value_t key = car(args);
   value_t value = eval(env, cdar(args));
-  mset(env, car(args), value);
-  return value;
+  mset(env, key, value);
+  return key;
 }
 
 static value_t _add(value_t env, value_t args) {
@@ -122,13 +246,7 @@ static value_t _div(value_t env, value_t args) {
 static value_t _print(value_t env, value_t args) {
   args = _list(env, args);
   value_t node = args;
-  while (node.type == PairType) {
-    pair_t pair = getPair(node);
-    _dump(pair.left, Nil);
-    print_char(' ');
-    node = pair.right;
-  }
-  print(COFF"\n");
+  dump_line(node);
   return Nil;
 }
 
@@ -153,75 +271,21 @@ static const builtin_t *functions = (const builtin_t[]){
 };
 
 int main() {
+  // Initialize symbol system with our builtins.
   symbols_init(functions);
+  quoteSym = Symbol("quote");
+  listSym = Symbol("list");
 
-  for (int i = 0; i < MAX_LINE_LENGTH; i++) {
-    print_char('#');
-  }
-  print_char('\n');
-
-  value_t env = List(
-    Mapping(name, Symbol("Tim")),
-    Mapping(age, Integer(34)),
-    Mapping(isProgrammer, True)
+  // Initialize repl environment with a version variable and ref to self.
+  repl = List(
+    Mapping(version,Symbol(VM_VERSION)),
+    Mapping(env,Nil)
   );
-  env = cons(cons(Symbol("tim"),env),env);
-  // mset(env, Symbol("tim"), env);
-  mset(env, Symbol("add"), Symbol("+"));
+  mset(repl, Symbol("env"),repl);
 
-  print("env: ");
-  dump(env);
-
-  const value_t *expressions = (const value_t[]){
-    List(Symbol("-"),Integer(5),Integer(2)),
-    List(Symbol("+"),Integer(1),Integer(2),Integer(3)),
-    List(Symbol("add"),Integer(1),Integer(2),Integer(3)),
-    List(Symbol("+"),
-      List(Symbol("*"),Integer(2),Integer(3)),
-      List(Symbol("/"),Integer(10),Integer(3)),
-      Integer(1)
-    ),
-    List(Symbol("+"),Integer(1),Integer(2)),
-    List(Integer(1),Integer(2),Integer(3)),
-    Integer(42),
-    Symbol("+"),
-    Symbol("what"),
-    Symbol("name"),
-    List(Symbol("list"), Symbol("age"), Symbol("isProgrammer")),
-    List(Symbol("quote"), Symbol("age"), Symbol("isProgrammer")),
-    List(Symbol("age"), Symbol("isProgrammer")),
-    Symbol("tim"),
-    List(Symbol("tim")),
-    List(Symbol("def"),
-      Symbol("greet"),
-      List(Symbol("person")),
-      List(Symbol("print"),
-        cons(Symbol("quote"),Symbol("hello")),
-        List(Symbol("mget"),Symbol("person"),cons(Symbol("quote"),Symbol("name"))))
-    ),
-    List(Symbol("set"),
-      Symbol("tim"),
-      List(
-        Symbol("quote"),
-        Mapping(name,Symbol("Tim")),
-        Mapping(age,Integer(34)),
-        Mapping(is-programmer,True)
-      )
-    ),
-    List(Symbol("greet"),Symbol("tim")),
-    cons(Symbol("list"),Integer(42)),
-    Nil,
-  };
-
-  for (int i = 0; !isNil(expressions[i]); i++) {
-    print("> ");
-    dump(expressions[i]);
-    dump(eval(env, expressions[i]));
-  }
-
-  // Start the line editor
+  // Initialize the repl prompt and callback
   prompt = "> ";
   onLine = parse;
+  // Run the line editor
   while (editor_step());
-
 }
