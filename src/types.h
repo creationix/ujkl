@@ -80,11 +80,13 @@ API void dump_line(value_t val);
 // Heap management
 
 #define Dot ((value_t){.type = AtomType, .data = -3})
+#define TypeError ((value_t){.type = AtomType, .data = -4})
 #define Undefined ((value_t){.type = AtomType, .data = -2})
 #define Free ((pair_t){.raw = ~0ul})
 #define Nil ((value_t){.type = AtomType,.data = -1})
 #define False ((value_t){.type = AtomType,.data = 0})
 #define True ((value_t){.type = AtomType,.data = 1})
+API value_t Bool(bool val);
 API value_t Integer(int32_t val);
 API value_t Symbol(const char* sym);
 API value_t SymbolRange(const char* start, const char* end);
@@ -112,12 +114,20 @@ API value_t reverse(value_t src);
 API value_t ilen(value_t list);
 API value_t iget(value_t list, value_t key);
 API value_t iset(value_t list, value_t key, value_t value);
-API value_t mget(value_t map, value_t key);
-API value_t mhas(value_t map, value_t key);
-API value_t mset(value_t map, value_t key, value_t value);
+// API value_t sadd(value_t set, value_t key);
+// API value_t shas(value_t set, value_t key);
+// API value_t sdel(value_t set, value_t key);
+
+API value_t set(value_t map, value_t key, value_t value);
+API value_t aset(value_t map, value_t keys, value_t value);
+API value_t has(value_t map, value_t key);
+API value_t ahas(value_t map, value_t keys);
+API value_t get(value_t map, value_t key);
+API value_t aget(value_t map, value_t keys);
+API value_t del(value_t map, value_t key);
+API value_t adel(value_t map, value_t keys);
 
 API pair_t getPair(value_t slot);
-// API bool setPair(value_t slot, pair_t pair);
 
 #define caar(var) car(car(var))
 #define cadr(var) cdr(car(var))

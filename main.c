@@ -15,6 +15,23 @@
 
 static value_t repl;
 
+// Look for dots and parse into list of symbols if found.
+static value_t getSymbols(const char* start, const char* end) {
+  value_t parts = Nil;
+  const char* s = start;
+  const char* i = s;
+  while (i < end) {
+    if (*i == '.' && i > s) {
+      value_t sym = SymbolRange(s, i);
+      parts = cons(sym, parts);
+      s = i + 1;
+    }
+    i++;
+  }
+  if (isNil(parts)) return SymbolRange(start, end);
+  return reverse(cons(SymbolRange(s,end), parts));
+}
+
 static void parse(const char *data) {
   value_t stack = Nil;
   value_t value = Nil;
@@ -120,7 +137,7 @@ static void parse(const char *data) {
         atom = False;
       }
       else {
-        atom = SymbolRange(start, data);
+        atom = getSymbols(start, data);
       }
       if (quote) {
         quote = false;
@@ -163,15 +180,94 @@ static value_t _quote(value_t env, value_t args) {
 static value_t _def(value_t env, value_t args) {
   value_t key = car(args);
   value_t fn = cdr(args);
-  mset(env, key, fn);
+  set(env, key, fn);
   return key;
 }
 
+static bool notList(value_t list) {
+  while (list.type == PairType) {
+    list = cdr(list);
+    if (isNil(list)) return false;
+  }
+  return true;
+}
+
+// static bool notMap(value_t map) {
+//   while (map.type == PairType) {
+//     if (car(map).type != PairType) return true;
+//     map = cdr(map);
+//     if (isNil(map)) return false;
+//   }
+//   return true;
+// }
+
+static value_t _get(value_t env, value_t args) {
+  value_t values = Nil;
+  while (args.type == PairType) {
+    pair_t pair = pairs[args.data];
+    value_t key = pair.left;
+    value_t res = notList(key) ? get(env, key) : aget(env, key);
+    if (eq(res, TypeError)) return res;
+    values = cons(res, values);
+    args = pair.right;
+  }
+  if (isNil(args)) return reverse(values);
+  return TypeError;
+}
+
+static value_t _has(value_t env, value_t args) {
+  bool found = true;
+  while (args.type == PairType) {
+    pair_t pair = pairs[args.data];
+    value_t key = pair.left;
+    value_t res = notList(key) ? has(env, key) : ahas(env, key);
+    if (eq(res, TypeError)) return res;
+    if (eq(res, False)) found = false;
+    args = pair.right;
+  }
+  if (isNil(args)) return Bool(found);
+  return TypeError;
+}
+
 static value_t _set(value_t env, value_t args) {
-  value_t key = car(args);
-  value_t value = eval(env, cdar(args));
-  mset(env, key, value);
-  return key;
+  while (args.type == PairType) {
+    pair_t pair = pairs[args.data];
+    value_t key = pair.left;
+    if (pair.right.type != PairType) return TypeError;
+    pair = pairs[pair.right.data];
+    value_t value = eval(env, pair.left);
+    value_t res = notList(key) ?
+      set(env, key, value) :
+      aset(env, key, value);
+    if (eq(res, TypeError)) return res;
+    args = pair.right;
+  }
+  if (isNil(args)) return True;
+  return TypeError;
+}
+
+static value_t _del(value_t env, value_t args) {
+  while (args.type == PairType) {
+    pair_t pair = pairs[args.data];
+    value_t key = pair.left;
+    value_t res = notList(key) ?
+      del(env, key) :
+      adel(env, key);
+    if (eq(res, TypeError)) return res;
+    args = pair.right;
+  }
+  if (isNil(args)) return True;
+  return TypeError;
+}
+
+static value_t _car(value_t env, value_t args) {
+  var1(env, args, a)
+  return car(a);
+}
+
+static value_t _cdr(value_t env, value_t args) {
+  var1(env, args, a)
+  return cdr(a);
 }
 
 static value_t _add(value_t env, value_t args) {
@@ -187,26 +283,6 @@ static value_t _add(value_t env, value_t args) {
   return Integer(sum);
 }
 
-static value_t _sub(value_t env, value_t args) {
-  int sum;
-  bool first = true;
-  while (args.type == PairType) {
-    pair_t pair = getPair(args);
-    value_t value = eval(env, pair.left);
-    if (value.type == IntegerType) {
-      if (first) {
-        first = false;
-        sum = value.data;
-      }
-      else {
-        sum -= value.data;
-      }
-    }
-    args = pair.right;
-  }
-  return first ? Undefined : Integer(sum);
-}
-
 static value_t _mul(value_t env, value_t args) {
   int sum = 1;
   while (args.type == PairType) {
@@ -220,27 +296,70 @@ static value_t _mul(value_t env, value_t args) {
   return Integer(sum);
 }
 
-static value_t _div(value_t env, value_t args) {
-  int sum;
-  bool first = true;
-  while (args.type == PairType) {
-    pair_t pair = getPair(args);
-    value_t value = eval(env, pair.left);
-    if (value.type == IntegerType) {
-      if (first) {
-        first = false;
-        sum = value.data;
-      }
-      else {
-        sum /= value.data;
-      }
-    }
-    else {
-      return Undefined;
-    }
-    args = pair.right;
+static value_t _sub(value_t env, value_t args) {
+  var2(env, args, a, b)
+  if (a.type == IntegerType && b.type == IntegerType) {
+    return Integer(a.data - b.data);
   }
-  return first ? Undefined : Integer(sum);
+  return Undefined;
+}
+
+static value_t _div(value_t env, value_t args) {
+  var2(env, args, a, b)
+  if (a.type == IntegerType && b.type == IntegerType) {
+    return Integer(a.data / b.data);
+  }
+  return Undefined;
+}
+
+static value_t _mod(value_t env, value_t args) {
+  var2(env, args, a, b)
+  if (a.type == IntegerType && b.type == IntegerType) {
+    return Integer(a.data % b.data);
+  }
+  return Undefined;
+}
+
+static value_t _lt(value_t env, value_t args) {
+  var2(env, args, a, b)
+  if (a.type == IntegerType && b.type == IntegerType) {
+    return Bool(a.data < b.data);
+  }
+  return Undefined;
+}
+
+static value_t _lte(value_t env, value_t args) {
+  var2(env, args, a, b)
+  if (a.type == IntegerType && b.type == IntegerType) {
+    return Bool(a.data <= b.data);
+  }
+  return Undefined;
+}
+
+static value_t _gt(value_t env, value_t args) {
+  var2(env, args, a, b)
+  if (a.type == IntegerType && b.type == IntegerType) {
+    return Bool(a.data > b.data);
+  }
+  return Undefined;
+}
+
+static value_t _gte(value_t env, value_t args) {
+  var2(env, args, a, b)
+  if (a.type == IntegerType && b.type == IntegerType) {
+    return Bool(a.data >= b.data);
+  }
+  return Undefined;
+}
+
+static value_t _eq(value_t env, value_t args) {
+  var2(env, args, a, b)
+  return Bool(eq(a,b));
+}
+
+static value_t _neq(value_t env, value_t args) {
+  var2(env, args, a, b)
+  return Bool(!eq(a,b));
 }
 
 static value_t _print(value_t env, value_t args) {
@@ -253,9 +372,6 @@ static value_t _print(value_t env, value_t args) {
 fn1(_ilen, list, return ilen(list);)
 fn2(_iget, list, key, return iget(list, key);)
 fn3(_iset, list, key, value, return iset(list, key, value);)
-fn2(_mget, map, key, return mget(map, key);)
-fn3(_mset, map, key, value, return mset(map, key, value);)
-fn2(_mhas, map, key, return mhas(map, key);)
 
 static const builtin_t *functions = (const builtin_t[]){
   {"eval", eval},
@@ -263,16 +379,28 @@ static const builtin_t *functions = (const builtin_t[]){
   {"quote", _quote},
   {"def", _def},
   {"set", _set},
+  {"has", _has},
+  {"get", _get},
+  {"del", _del},
+  {"car", _car},
+  {"cdr", _cdr},
   {"+", _add},
   {"-", _sub},
   {"*", _mul},
   {"/", _div},
+  {"%", _mod},
+  {"<", _lt},
+  {"<=", _lte},
+  {">", _gt},
+  {">=", _gte},
+  {"=", _eq},
+  {"!=", _neq},
   {"ilen", _ilen},
   {"iget", _iget},
   {"iset", _iset},
-  {"mget", _mget},
-  {"mset", _mset},
-  {"mhas", _mhas},
+  // {"sadd", _sadd},
+  // {"sdel", _sdel},
+  // {"shas", _shas},
   {"print", _print},
   {0,0},
 };
@@ -284,25 +412,38 @@ int main() {
   listSym = Symbol("list");
 
   // Initialize repl environment with a version variable and ref to self.
-  repl = mset(Nil, Symbol("env"), Nil);
-  mset(repl, Symbol("env"), repl);
-  mset(repl, Symbol("version"), Symbol(VM_VERSION));
+  repl = set(Nil, Symbol("env"), Nil);
+  set(repl, Symbol("env"), repl);
+  // set(repl, Symbol("version"), Symbol(VM_VERSION));
 
-  const value_t *expressions = (const value_t[]){
-    List(Symbol("+"), Integer(1), Integer(2)),
-    List(Symbol("quote"), Symbol("Hello"), Symbol("world!")),
-    Nil,
+  const char** lines = (const char*[]) {
+    // "(+ 1 2)",
+    // "'(Hello world!)'",
+    // "(set jack.stats.age 10 jack.name 'Jack)",
+    // "(has jack.stats.age)",
+    // "(get jack.name)",
+    // "(get jack.other.stuff)",
+    // "(has jack.stats.other)",
+    // "(get jack.stats.other)",
+    // "jack",
+    "(set c.b.a 0)",
+    "(set a.b.c 10) (set a.b.d 20)",
+    "env",
+    "(del a.b.c)",
+    "env",
+    "(del (a))",
+    "env",
+    0
   };
 
-  for (int i = 0; !isNil(expressions[i]); i++) {
-    print("> ");
-    dump(expressions[i]);
-    dump(eval(repl, expressions[i]));
+  prompt = "> ";
+
+  for (int i = 0; lines[i]; i++) {
+    parse(lines[i]);
   }
 
 
   // Start the repl
-  prompt = "> ";
   onLine = parse;
   while (editor_step());
 }

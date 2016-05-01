@@ -13,6 +13,7 @@
   #define CBUILTIN ""
   #define CPAREN ""
   #define CSEP ""
+  #define CERROR ""
 #elif THEME == tim
   // Tim's Blue-Orange Theme (256 colors)
   #define COFF "\x1b[0m"
@@ -24,6 +25,7 @@
   #define CBUILTIN "\x1b[38;5;214m"
   #define CPAREN "\x1b[38;5;24m"
   #define CSEP "\x1b[38;5;26m"
+  #define CERROR "\x1b[38;5;196m"
 #elif THEME == jack
   // Jack's Shades-O-Green Theme (256 colors)
   #define COFF "\x1b[0m"
@@ -35,6 +37,7 @@
   #define CBUILTIN "\x1b[38;5;208m"
   #define CPAREN "\x1b[38;5;31m"
   #define CSEP "\x1b[38;5;160m"
+  #define CERROR "\x1b[38;5;196m"
 #else
   #define COFF "\x1b[0m"
   #define CNIL "\x1b[1;36m"
@@ -45,6 +48,7 @@
   #define CBUILTIN "\x1b[1;32m"
   #define CPAREN "\x1b[1;30m"
   #define CSEP "\x1b[1;34m"
+  #define CERROR "\x16[1;31m"
 #endif
 
 static value_t seen;
@@ -53,9 +57,11 @@ static void _dump(value_t val) {
   switch (val.type) {
     case AtomType:
       switch (val.data) {
+        case -4: print(CERROR"type-error"); return;
         case -1: print(CNIL"nil"); return;
         case 1: print(CBOOL"true"); return;
         case 0: print(CBOOL"false"); return;
+
         default: print(CUNDEF"undefined"); return;
       }
     case IntegerType:

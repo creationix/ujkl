@@ -56,7 +56,7 @@ API value_t eval(value_t env, value_t expr) {
   // Resolve user variables to entry in environment.
   // Builtins return themselves.
   if (expr.type == SymbolType) {
-    expr = expr.data < 0 ? mget(env, expr) : expr;
+    expr = expr.data < 0 ? get(env, expr) : expr;
   }
 
   else if (expr.type == PairType) {
@@ -85,7 +85,7 @@ API value_t eval(value_t env, value_t expr) {
         else {
           value = Undefined;
         }
-        subEnv = mset(subEnv, name, value);
+        subEnv = set(subEnv, name, value);
         params = cdr(params);
       }
 
