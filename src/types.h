@@ -79,8 +79,9 @@ API void dump_line(value_t val);
 
 // Heap management
 
-#define Dot ((value_t){.type = AtomType, .data = -3})
+#define RangeError ((value_t){.type = AtomType, .data = -5})
 #define TypeError ((value_t){.type = AtomType, .data = -4})
+#define Dot ((value_t){.type = AtomType, .data = -3})
 #define Undefined ((value_t){.type = AtomType, .data = -2})
 #define Free ((pair_t){.raw = ~0ul})
 #define Nil ((value_t){.type = AtomType,.data = -1})
