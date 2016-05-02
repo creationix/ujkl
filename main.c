@@ -3,7 +3,7 @@
 #define SYMBOLS_BLOCK_SIZE 128
 #define PAIRS_BLOCK_SIZE 16
 #define THEME tim
-#define MAX_PINS 22
+// #define MAX_PINS 22
 // #define TRACE
 #define API static
 
@@ -203,17 +203,8 @@ static bool notList(value_t list) {
 // }
 
 static value_t _get(value_t env, value_t args) {
-  value_t values = Nil;
-  while (args.type == PairType) {
-    pair_t pair = pairs[args.data];
-    value_t key = pair.left;
-    value_t res = notList(key) ? get(env, key) : aget(env, key);
-    if (eq(res, TypeError)) return res;
-    values = cons(res, values);
-    args = pair.right;
-  }
-  if (isNil(args)) return reverse(values);
-  return TypeError;
+  value_t key = car(args);
+  return notList(key) ? get(env, key) : aget(env, key);
 }
 
 static value_t _has(value_t env, value_t args) {
