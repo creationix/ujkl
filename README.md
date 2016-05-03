@@ -10,6 +10,13 @@ many conventions here are my own.
 Code is data and data is code.  This means that a function is nothing more than
 a data list with special structure.
 
+**NOTICE** The code is not yet complete.  It currently has a working repl and
+some of the documented APIs here, but I'm doing readme-driven-development and
+designing the language/apis before implementing them.  Feel free to comment on
+the design or peruse the code patterns in general, but don't be surprised if
+the code doesn't match the docs (or doesn't compile at all).
+
+
 ## Value Types
 
 There are very few primitives types in the runtime.  They are:
