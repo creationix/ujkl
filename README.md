@@ -151,8 +151,45 @@ Nodes can live within a network and communicate via pubsub system.
 
 ## GPIO
 
+Low level access to digital GPOIs.  This is great for controlling LEDs and
+reading buttons.
+
 - (gpio-enable pin mode) - mode can be 'output, 'input, or 'input-pullup.
 - (gpio-write pin value) - value is boolean
 - (gpio-read pin) -> value - value is boolean
+- (gpio-when pin ((value)...)) -> handle - Register a callback for when a pin
+  changes value.
+- (gpio-stop handle) - remove listener
+
+## I2C
+
+This allows writing drivers for I2C devices in the scripting language!
+
+- (i2c-init scl-pin sda-pin) - initialize pins for i2c
+- (i2c-write byte) -> ack - low level write command
+- (i2c-read ack) -> byte - low level read command
+- (i2c-start) - low level start command
+- (i2d-stop) - low level stop command
+- (i2c-slave-write addr bytes) -> bool - high level write command
+- (i2c-slave-read addr data len) -> bytes - high level read command
+
+## WS2812
+
+If we can get away with it, this allows streaming of neopixel values.
+
+If we are too slow then start and stop will need to be baked into just the list
+commands.
+
+- (ws2812-seq-start)
+- (ws2812-seq-stop)
+- (ws2812-byte pin byte)
+- (ws2812-rgb pin color)
+- (ws2812-rgbw pin color)
+- (ws2812-rgb-list pin colors)
+- (ws2812-rgbw-list pin colors)
+
+## Tone
+
+Generate a square wave by flipping a digital pin at a frequency.
+
 - (tone pin freq duration) - Play tone at frequency on pin for duration
-- (gpio-when pin (()))
