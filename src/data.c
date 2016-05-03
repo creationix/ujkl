@@ -329,6 +329,25 @@ API value_t adel(value_t map, value_t keys) {
   return TypeError;
 }
 
+API value_t each(value_t context, value_t node, api_fn block) {
+  value_t result = Undefined;
+  while (node.type == PairType) {
+    pair_t pair = pairs[node.data];
+    result = block(context, pair.left);
+    node = pair.right;
+  }
+  return result;
+}
+
+API value_t map(value_t context, value_t node, api_fn block) {
+  value_t result = Nil;
+  while (node.type == PairType) {
+    pair_t pair = pairs[node.data];
+    result = cons(block(context, pair.left), result);
+    node = pair.right;
+  }
+  return reverse(result);
+}
 
 API value_t set(value_t map, value_t key, value_t value) {
   if (isNil(map)) return cons(cons(key, value), Nil);

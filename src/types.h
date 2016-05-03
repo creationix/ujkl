@@ -119,6 +119,9 @@ API value_t iset(value_t list, value_t key, value_t value);
 // API value_t shas(value_t set, value_t key);
 // API value_t sdel(value_t set, value_t key);
 
+API value_t each(value_t context, value_t node, api_fn block);
+API value_t map(value_t context, value_t node, api_fn block);
+
 API value_t set(value_t map, value_t key, value_t value);
 API value_t aset(value_t map, value_t keys, value_t value);
 API value_t has(value_t map, value_t key);

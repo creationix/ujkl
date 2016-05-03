@@ -4,7 +4,7 @@
 #define PAIRS_BLOCK_SIZE 16
 #define THEME tim
 // #define MAX_PINS 22
-// #define TRACE
+#define TRACE
 #define API static
 
 #include "src/data.c"
@@ -31,6 +31,11 @@ static value_t getSymbols(const char* start, const char* end) {
   }
   if (isNil(parts)) return SymbolRange(start, end);
   return reverse(cons(SymbolRange(s,end), parts));
+}
+
+static value_t eval_dump_fn(value_t env, value_t val) {
+  dump(eval(env, val));
+  return Nil;
 }
 
 static void parse(const char *data) {
@@ -152,23 +157,27 @@ static void parse(const char *data) {
   print("\r\x1b[K");
   print(prompt);
   dump_line(value);
-  while (value.type == PairType) {
-    dump(eval(repl, car(value)));
-    value = cdr(value);
-  }
+  each(repl, value, eval_dump_fn);
 }
 
 static value_t _list(value_t env, value_t args) {
-  (void)(env);
-  value_t node = args;
-  value_t res = Nil;
-  // TODO: find a way to implement this thas doesn't cause so much GC pressure.
-  while (node.type == PairType) {
-    pair_t pair = getPair(node);
-    res = cons(eval(env, pair.left), res);
-    node = pair.right;
-  }
-  return reverse(res);
+  return map(env, args, eval);
+}
+
+static value_t call_fn(value_t env_fn, value_t value) {
+  value_t env = car(env_fn);
+  value_t fn = cdr(env_fn);
+  return apply(env, fn, cons(value, Nil));
+}
+
+static value_t _map(value_t env, value_t args) {
+  var2(env, args, list, fn);
+  return map(cons(env, fn), list, call_fn);
+}
+
+static value_t _each(value_t env, value_t args) {
+  var2(env, args, list, fn);
+  return each(cons(env, fn), list, call_fn);
 }
 
 // Passed values through unaffected
@@ -355,10 +364,7 @@ static value_t _neq(value_t env, value_t args) {
 }
 
 static value_t _print(value_t env, value_t args) {
-  args = _list(env, args);
-  value_t node = args;
-  dump_line(node);
-  return Nil;
+  return each(env, args, eval_dump_fn);
 }
 
 fn1(_ilen, list, return ilen(list);)
@@ -438,6 +444,8 @@ static value_t _write(value_t env, value_t args) {
 static const builtin_t *functions = (const builtin_t[]){
   {"eval", eval},
   {"list", _list},
+  {"map", _map},
+  {"each", _each},
   {"quote", _quote},
   {"def", _def},
   {"set", _set},
@@ -483,22 +491,8 @@ int main() {
   // set(repl, Symbol("version"), Symbol(VM_VERSION));
 
   const char** lines = (const char*[]) {
-    // "(+ 1 2)",
-    // "'(Hello world!)'",
-    // "(set jack.stats.age 10 jack.name 'Jack)",
-    // "(has jack.stats.age)",
-    // "(get jack.name)",
-    // "(get jack.other.stuff)",
-    // "(has jack.stats.other)",
-    // "(get jack.stats.other)",
-    // "jack",
-    "(set c.b.a 0)",
-    "(set a.b.c 10) (set a.b.d 20)",
-    "env",
-    "(del a.b.c)",
-    "env",
-    "(del (a))",
-    "env",
+    "(+ 1 2)",
+    "(print 'Hello 'world!)",
     0
   };
 

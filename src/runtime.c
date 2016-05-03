@@ -40,6 +40,42 @@ static void full_dump(value_t val) {
 #endif
 #endif
 
+// FN is pre-evaluated
+// args is list of unevaluated arguments
+API value_t apply(value_t env, value_t fn, value_t args) {
+
+  if (args.type != PairType) return TypeError;
+
+  // Native function.
+  if (fn.type == SymbolType && fn.data >= 0) {
+    api_fn native = symbols_get_fn(fn.data);
+    return native(env, args);
+  }
+
+  // Create a new empty environment (no closures for now)
+  value_t subEnv = Nil;
+  // Apply arguments to parameters
+  value_t params = car(fn);
+  while (params.type == PairType) {
+    value_t name = car(params);
+    value_t value;
+    if (args.type == PairType) {
+      value = eval(env, car(args));
+      args = cdr(args);
+    }
+    else {
+      value = Undefined;
+    }
+    subEnv = set(subEnv, name, value);
+    params = cdr(params);
+  }
+
+  // Run each value in the body one at a time returning the last value
+  value_t body = cdr(fn);
+  print("subenv: ");
+  dump(subEnv);
+  return each(subEnv, body, eval);
+}
 
 API value_t eval(value_t env, value_t expr) {
 
@@ -60,43 +96,7 @@ API value_t eval(value_t env, value_t expr) {
   }
 
   else if (expr.type == PairType) {
-    value_t fn = eval(env, car(expr));
-
-    // Native function.
-    if (fn.type == SymbolType && fn.data >= 0) {
-      api_fn native = symbols_get_fn(fn.data);
-      expr = native(env, cdr(expr));
-    }
-
-    // User defined function.
-    else {
-      // Create a new empty environment (no closures for now)
-      value_t subEnv = Nil;
-      // Apply arguments to parameters
-      value_t params = car(fn);
-      value_t args = cdr(expr);
-      while (params.type == PairType) {
-        value_t name = car(params);
-        value_t value;
-        if (args.type == PairType) {
-          value = eval(env, car(args));
-          args = cdr(args);
-        }
-        else {
-          value = Undefined;
-        }
-        subEnv = set(subEnv, name, value);
-        params = cdr(params);
-      }
-
-      // Run each value in the body one at a time returning the last value
-      value_t body = cdr(fn);
-      expr = Undefined;
-      while (body.type == PairType) {
-        expr = eval(subEnv, car(body));
-        body = cdr(body);
-      }
-    }
+    expr = apply(env, eval(env, car(expr)), cdr(expr));
   }
 #ifdef TRACE
   indent--;
