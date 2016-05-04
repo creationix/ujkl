@@ -16,12 +16,11 @@ designing the language/apis before implementing them.  Feel free to comment on
 the design or peruse the code patterns in general, but don't be surprised if
 the code doesn't match the docs (or doesn't compile at all).
 
-
 ## Value Types
 
 There are very few primitives types in the runtime.  They are:
 
-- Integers - signed integers with 29 bits of capacity (-268435456-268435455)
+- Integers - signed integers with 29 bits of capacity (-268435456 to 268435455)
 - True, False - useful for boolean operations
 - Nil - Represents the empty list usually
 - Symbol - An interned, immutable string.  Used for variable names and property
@@ -54,10 +53,19 @@ will resolve using the result of the previous as the new table.
 
 ## Cons Pair Operations
 
-- (fst pair) -> value - return left side of pair
-- (snd pair) -> value - return right side of pair
-- (set-fst! pair value) - modify pair in place
-- (set-snd! pair value) - modify pair in place
+- (first pair) -> value - return left side of pair
+- (rest pair) -> value - return right side of pair
+- (set-first! pair value) - modify pair in place
+- (set-rest! pair value) - modify pair in place
+
+The following equivalents are in the C interface.
+
+```c
+value_t first(value_t pair);
+value_t rest(value_t pair);
+value_t set_first(value_t pair, value_t val);
+value_t set_rest(value_t pair, value_t val);
+```
 
 ## List Operations
 
@@ -67,14 +75,35 @@ and a reference to the next node is on the right.
 - (list? list) -> boolean - each node is either a nil or a pair pointing to a node
 - (length? list) -> number - length of list
 - (reverse list) -> list
+- (sort list) -> list - sort with default sorting
 - (sort list ((l r)...)->rank) -> list - sort a list with optional sort function
 
 - (concat list list...) -> combined-list
-- (append! list value...) -> list - append some values to list.
+- (append! list value...) -> list - add some values to end of list.
+
+- (iget list index) -> value
+- (iset! list index value) -> list
 
 - (has? set value) -> boolean
 - (add! set value) -> list
 - (remove! set value) -> list
+
+In the C interface for functions these are the equivalents
+
+```c
+bool is_list(value_t val);
+int list_length(value_t list);
+value_t list_reverse(value_t list);
+value_t list_sort(value_t list);
+value_t list_custom_sort(value_t list, value_t context, api_fn, sorter);
+value_t list_concat(value_t parts);
+value_t list_append(value_t list, value_t parts);
+value_t list_get(value_t set, int index);
+value_t list_set(value_t set, int index, value_t value);
+bool set_has(value_t set, value_t val);
+value_t set_add(value_t set, value_t val);
+value_t set_remove(value_t set, value_t val);
+```
 
 ## Table Operations
 
@@ -83,8 +112,21 @@ and a reference to the next node is on the right.
 - (table? tab) -> boolean - a list of pairs
 - (t-get tab key) -> value
 - (t-has tab key ...) -> bool
-- (t-del! tab key ...) -> obj
-- (t-set! tab key value ...) -> obj
+- (t-del! tab key ...) -> tab
+- (t-set! tab key value ...) -> tab
+
+The following C functions are also available.
+
+```c
+bool is_table(value_t val);
+value_t table_get(value_t tab, value_t key);
+value_t table_aget(value_t tab, value_t keys);
+bool table_has(value_t tab, value_t key);
+bool table_ahas(value_t tab, value_t keys);
+value_t table_del(value_t tab, value_t key);
+value_t table_adel(value_t tab, value_t keys);
+value_t table_set(value_t tab, value_t key, value);
+```
 
 ## Iterators
 
@@ -96,6 +138,12 @@ and a reference to the next node is on the right.
 - (map iter ((item)...)->value) -> list
 - (filter iter ((item)...)->boolean) -> list
 - (filter-map iter ((item)...)->boolean) -> list
+
+```c
+value_t each(value_t list, value_t context, api_fn block);
+value_t map(value_t list, value_t context, api_fn block);
+value_t filter(value_t list, value_t context, api_fn block);
+```
 
 ## Control Flow
 
@@ -150,9 +198,8 @@ Truthyness is defined as:
 
 Nodes can live within a network and communicate via pubsub system.
 
-- (net-namespace namespace) - prefix all names with namespace
-- (net-send name data) - send data to all nodes with name
-- (net-read name) -> data - Read data from queue, nil if empty
+- (net-put name data) - send data to all nodes with name
+- (net-get name) -> data - Read data from queue, nil if empty
 - (net-when name ((data)...)) -> handle - Setup listener callback
 - (net-stop handle) - remove listener
 
