@@ -100,9 +100,9 @@ value_t list_concat(value_t parts);
 value_t list_append(value_t list, value_t parts);
 value_t list_get(value_t set, int index);
 value_t list_set(value_t set, int index, value_t value);
-bool set_has(value_t set, value_t val);
-value_t set_add(value_t set, value_t val);
-value_t set_remove(value_t set, value_t val);
+bool list_has(value_t list, value_t val);
+value_t list_add(value_t list, value_t val);
+value_t list_remove(value_t list, value_t val);
 ```
 
 ## Table Operations
@@ -164,6 +164,11 @@ value_t filter(value_t list, value_t context, api_fn block);
 - (rand mod) -> random integer from 0 to mod - 1
 - (rand start stop) -> random integer from start to stop inclusive
 
+```c
+void deadbeef_seed(int seed);
+int deadbeef_rand();
+```
+
 ## Comparison
 
 Values must be of same type, numbers can compare with numbers, symbols compare
@@ -184,6 +189,10 @@ Truthyness is defined as:
 
 - true, numbers, symbols, pairs - all truthy
 - false, nil, undefined, etc - all falsy
+
+```c
+bool to_bool(value_t val);
+```
 
 - (and a b ...) -> value - short circuit evaluation, return last value processed
 - (or a b ...) -> value - same props as and
