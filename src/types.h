@@ -98,6 +98,9 @@ API bool isFree(pair_t pair);
 
 API value_t car(value_t var);
 API value_t cdr(value_t var);
+API bool set_car(value_t var, value_t val);
+API bool set_cdr(value_t var, value_t val);
+
 API value_t cons(value_t left, value_t right);
 
 #define List(...) __extension__({\

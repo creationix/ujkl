@@ -4,19 +4,6 @@
 #include "types.h"
 #include <stdlib.h> // for realloc
 
-// A list is made up of linked pairs. (value, next)
-// A map is made up of linked pairs ((key, value), next)
-// A string is a list of integers.
-
-
-// (set key value
-//      (list key) value...)
-
-// (get key)
-// (get (list key))
-// (get foo.bar)
-
-
 static pair_t *pairs;
 static int next_pair;
 static int num_pairs;
@@ -24,7 +11,6 @@ static int num_pairs;
 API pair_t getPair(value_t slot) {
   return (slot.type == PairType) ? pairs[slot.data] : Free;
 }
-
 
 API value_t Bool(bool val) {
   return val ? True : False;
@@ -87,6 +73,10 @@ static int find_pair_slot() {
   return next_pair;
 }
 
+API value_t first(value_t pair);
+API value_t rest(value_t pair);
+API value_t set_first(value_t pair, value_t val);
+API value_t set_rest(value_t pair, value_t val);
 
 API value_t car(value_t var) {
   return var.type == PairType ? pairs[var.data].left : Undefined;
@@ -94,6 +84,18 @@ API value_t car(value_t var) {
 
 API value_t cdr(value_t var) {
   return var.type == PairType ? pairs[var.data].right : Undefined;
+}
+
+API bool set_car(value_t var, value_t val) {
+  if (var.type != PairType) return false;
+  pairs[var.data].left = val;
+  return true;
+}
+
+API bool set_cdr(value_t var, value_t val) {
+  if (var.type != PairType) return false;
+  pairs[var.data].left = val;
+  return true;
 }
 
 API value_t cons(value_t left, value_t right) {

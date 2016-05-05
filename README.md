@@ -53,18 +53,18 @@ will resolve using the result of the previous as the new table.
 
 ## Cons Pair Operations
 
-- (first pair) -> value - return left side of pair
-- (rest pair) -> value - return right side of pair
-- (set-first! pair value) - modify pair in place
-- (set-rest! pair value) - modify pair in place
+- (car pair) -> value - return left side of pair
+- (cdr pair) -> value - return right side of pair
+- (set-car! pair value) -> bool - modify pair in place
+- (set-cdr! pair value) -> bool - modify pair in place
 
 The following equivalents are in the C interface.
 
 ```c
-value_t first(value_t pair);
-value_t rest(value_t pair);
-value_t set_first(value_t pair, value_t val);
-value_t set_rest(value_t pair, value_t val);
+value_t car(value_t pair);
+value_t cdr(value_t pair);
+bool set_car(value_t pair, value_t val);
+bool set_cdr(value_t pair, value_t val);
 ```
 
 ## List Operations
