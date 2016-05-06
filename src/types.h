@@ -77,8 +77,7 @@ API void dump(value_t val);
 // Prints multiple values with spaces between them
 API void dump_line(value_t val);
 
-// Heap management
-
+// Data
 #define RangeError ((value_t){.type = AtomType, .data = -5})
 #define TypeError ((value_t){.type = AtomType, .data = -4})
 #define Dot ((value_t){.type = AtomType, .data = -3})
@@ -87,22 +86,6 @@ API void dump_line(value_t val);
 #define Nil ((value_t){.type = AtomType,.data = -1})
 #define False ((value_t){.type = AtomType,.data = 0})
 #define True ((value_t){.type = AtomType,.data = 1})
-API value_t Bool(bool val);
-API value_t Integer(int32_t val);
-API value_t Symbol(const char* sym);
-API value_t SymbolRange(const char* start, const char* end);
-
-API bool eq(value_t a, value_t b);
-API bool isNil(value_t value);
-API bool isFree(pair_t pair);
-
-API value_t car(value_t var);
-API value_t cdr(value_t var);
-API bool set_car(value_t var, value_t val);
-API bool set_cdr(value_t var, value_t val);
-
-API value_t cons(value_t left, value_t right);
-
 #define List(...) __extension__({\
   value_t values[] = { __VA_ARGS__ }; \
   value_t node = Nil; \
@@ -110,36 +93,62 @@ API value_t cons(value_t left, value_t right);
     node = cons(values[i], node); \
   } \
   node; })
-
 #define Mapping(name, value) cons(Symbol(#name),value)
+API pair_t get_pair(value_t slot);
+API value_t Bool(bool val);
+API value_t Integer(int32_t val);
+API value_t Symbol(const char* sym);
+API value_t SymbolRange(const char* start, const char* end);
 
-// API value_t append(value_t left, value_t right);
-API value_t reverse(value_t src);
-API value_t ilen(value_t list);
-API value_t iget(value_t list, value_t key);
-API value_t iset(value_t list, value_t key, value_t value);
-// API value_t sadd(value_t set, value_t key);
-// API value_t shas(value_t set, value_t key);
-// API value_t sdel(value_t set, value_t key);
+API value_t cons(value_t left, value_t right);
+API value_t car(value_t var);
+API value_t cdr(value_t var);
+API bool set_car(value_t var, value_t val);
+API bool set_cdr(value_t var, value_t val);
+API pair_t get_pair(value_t slot);
+API bool eq(value_t a, value_t b);
+API bool isNil(value_t value);
+API bool isTruthy(value_t value);
+API bool isFree(pair_t pair);
 
-API value_t each(value_t context, value_t node, api_fn block);
-API value_t map(value_t context, value_t node, api_fn block);
+// Lists
+API bool is_list(value_t val);
+API int list_length(value_t list);
+API value_t list_reverse(value_t list);
+API value_t list_append(value_t list, value_t values);
+API value_t list_sort(value_t list);
+API value_t list_custom_sort(value_t list, value_t ctx, api_fn sorter);
+API value_t list_get(value_t list, int index);
+API value_t list_set(value_t list, int index, value_t value);
+API bool list_has(value_t list, value_t val);
+API value_t list_add(value_t list, value_t val);
+API value_t list_remove(value_t list, value_t val);
+API value_t list_each_r(value_t list, value_t context, api_fn block);
+API value_t list_each(value_t list, value_t context, api_fn block);
+API value_t list_map_r(value_t list, value_t context, api_fn block);
+API value_t list_map(value_t list, value_t context, api_fn block);
+API value_t list_filter_r(value_t list, value_t context, api_fn block);
+API value_t list_filter(value_t list, value_t context, api_fn block);
 
-API value_t set(value_t map, value_t key, value_t value);
-API value_t aset(value_t map, value_t keys, value_t value);
-API value_t has(value_t map, value_t key);
-API value_t ahas(value_t map, value_t keys);
-API value_t get(value_t map, value_t key);
-API value_t aget(value_t map, value_t keys);
-API value_t del(value_t map, value_t key);
-API value_t adel(value_t map, value_t keys);
+// Tables
 
-API pair_t getPair(value_t slot);
+API bool is_table(value_t val);
+API value_t table_get(value_t table, value_t key);
+// API value_t table_aget(value_t table, value_t keys);
+API value_t table_set(value_t table, value_t key, value_t value);
+// API value_t aset(value_t map, value_t keys, value_t value);
+// API value_t table_has(value_t map, value_t key);
+// API value_t table_ahas(value_t map, value_t keys);
+// API value_t table_del(value_t map, value_t key);
+// API value_t table_adel(value_t map, value_t keys);
 
-#define caar(var) car(car(var))
-#define cadr(var) cdr(car(var))
-#define cdar(var) car(cdr(var))
-#define cddr(var) cdr(cdr(var))
+// Misc
+
+
+// #define caar(var) car(car(var))
+// #define cadr(var) cdr(car(var))
+// #define cdar(var) car(cdr(var))
+// #define cddr(var) cdr(cdr(var))
 // #define caaar(var) car(car(car(var)))
 // #define caadr(var) car(car(cdr(var)))
 // #define cadar(var) car(cdr(car(var)))

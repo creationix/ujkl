@@ -96,8 +96,7 @@ int list_length(value_t list);
 value_t list_reverse(value_t list);
 value_t list_sort(value_t list);
 value_t list_custom_sort(value_t list, value_t context, api_fn, sorter);
-value_t list_concat(value_t parts);
-value_t list_append(value_t list, value_t parts);
+value_t list_append(value_t list, value_t tail);
 value_t list_get(value_t set, int index);
 value_t list_set(value_t set, int index, value_t value);
 bool list_has(value_t list, value_t val);
@@ -140,9 +139,9 @@ value_t table_set(value_t tab, value_t key, value);
 - (filter-map iter ((item)...)->boolean) -> list
 
 ```c
-value_t each(value_t list, value_t context, api_fn block);
-value_t map(value_t list, value_t context, api_fn block);
-value_t filter(value_t list, value_t context, api_fn block);
+value_t list_each(value_t list, value_t context, api_fn block);
+value_t list_map(value_t list, value_t context, api_fn block);
+value_t list_filter(value_t list, value_t context, api_fn block);
 ```
 
 ## Control Flow

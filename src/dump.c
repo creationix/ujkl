@@ -83,7 +83,7 @@ static void _dump(value_t val) {
         node = cdr(node);
       }
       seen = cons(val, seen);
-      pair_t pair = getPair(val);
+      pair_t pair = get_pair(val);
       const char *opener, *closer;
       if (eq(pair.left, quoteSym)) {
         if (pair.right.type != PairType) {
@@ -94,13 +94,13 @@ static void _dump(value_t val) {
         opener = "'(";
         closer = ")";
         val = pair.right;
-        pair = getPair(val);
+        pair = get_pair(val);
       }
       else if (eq(pair.left, listSym) && pair.right.type == PairType) {
         opener = "[";
         closer = "]";
         val = pair.right;
-        pair = getPair(val);
+        pair = get_pair(val);
       }
       else {
         opener = "(";
@@ -115,7 +115,7 @@ static void _dump(value_t val) {
         _dump(pair.left);
         while (pair.right.type == PairType) {
           print_char(' ');
-          pair = getPair(pair.right);
+          pair = get_pair(pair.right);
           _dump(pair.left);
         }
         if (!isNil(pair.right)) {
@@ -142,13 +142,13 @@ API void dump(value_t val) {
 
 API void dump_line(value_t val) {
   if (val.type == PairType) {
-    pair_t pair = getPair(val);
+    pair_t pair = get_pair(val);
     seen = Nil;
     _dump(pair.left);
     val = pair.right;
     while (val.type == PairType) {
       print_char(' ');
-      pair_t pair = getPair(val);
+      pair_t pair = get_pair(val);
       seen = Nil;
       _dump(pair.left);
       val = pair.right;
