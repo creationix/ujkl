@@ -136,7 +136,7 @@ API bool is_table(value_t val);
 API value_t table_get(value_t table, value_t key);
 // API value_t table_aget(value_t table, value_t keys);
 API value_t table_set(value_t table, value_t key, value_t value);
-// API value_t aset(value_t map, value_t keys, value_t value);
+API value_t table_aset(value_t map, value_t keys, value_t value);
 // API value_t table_has(value_t map, value_t key);
 // API value_t table_ahas(value_t map, value_t keys);
 // API value_t table_del(value_t map, value_t key);

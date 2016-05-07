@@ -119,8 +119,9 @@ API value_t list_add(value_t list, value_t val) {
   value_t node = list;
   while (node.type == PairType) {
     pair_t pair = get_pair(node);
+    if (eq(pair.left, val)) return list;
     if (isNil(pair.right)) {
-      set_cdr(node, val);
+      set_cdr(node, cons(val, Nil));
       return list;
     }
     node = pair.right;

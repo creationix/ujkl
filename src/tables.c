@@ -61,32 +61,32 @@ API value_t table_set(value_t table, value_t key, value_t value) {
 // Keys is a list of keys, each for the nesting
 // Value is the new value to set or update.
 // returns map (possibly changed)
-// API value_t table_aset(value_t map, value_t keys, value_t value) {
-//   if (isNil(keys)) return value;
-//   if (keys.type != PairType) return TypeError;
-//   pair_t keypair = get_pair(keys);
-//   if (isNil(map)) {
-//     value = aset(Nil, keypair.right, value);
-//     return cons(cons(keypair.left, value), Nil);
-//   }
-//   value_t node = map;
-//   while (node.type == PairType) {
-//     pair_t pair = get_pair(node);
-//     if (pair.left.type != PairType) return TypeError;
-//     pair_t mapping = get_pair(pair.left);
-//     if (eq(mapping.left, keypair.left)) {
-//       set_cdr(pair.left, aset(mapping.right, keypair.right, value));
-//       return map;
-//     }
-//     if (isNil(pair.right)) {
-//       value = aset(pair.right, keypair.right, value);
-//       set_cdr(node, cons(cons(keypair.left, value), Nil));
-//       return map;
-//     }
-//     node = pair.right;
-//   }
-//   return TypeError;
-// }
+API value_t table_aset(value_t map, value_t keys, value_t value) {
+  if (isNil(keys)) return value;
+  if (keys.type != PairType) return TypeError;
+  pair_t keypair = get_pair(keys);
+  if (isNil(map)) {
+    value = table_aset(Nil, keypair.right, value);
+    return cons(cons(keypair.left, value), Nil);
+  }
+  value_t node = map;
+  while (node.type == PairType) {
+    pair_t pair = get_pair(node);
+    if (pair.left.type != PairType) return TypeError;
+    pair_t mapping = get_pair(pair.left);
+    if (eq(mapping.left, keypair.left)) {
+      set_cdr(pair.left, table_aset(mapping.right, keypair.right, value));
+      return map;
+    }
+    if (isNil(pair.right)) {
+      value = table_aset(pair.right, keypair.right, value);
+      set_cdr(node, cons(cons(keypair.left, value), Nil));
+      return map;
+    }
+    node = pair.right;
+  }
+  return TypeError;
+}
 
 // API value_t table_has(value_t map, value_t key) {
 //   while (map.type == PairType) {
