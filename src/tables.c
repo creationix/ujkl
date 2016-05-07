@@ -137,8 +137,7 @@ API value_t table_adel(value_t map, value_t keys) {
         set_cdr(prev, pair.right);
         return map;
       }
-      mapping.right = table_adel(mapping.right, keypair.right);
-      set_cdr(pair.left, pair.right);
+      set_cdr(pair.left, table_adel(mapping.right, keypair.right));
       return map;
     }
     prev = node;

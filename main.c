@@ -111,6 +111,11 @@ static void parse(const char *data) {
       }
       value = cons(atom, value);
     }
+    else if (*data == '"') {
+      const char* start = ++data;
+      while (*data && *data != '"') data++;
+      value = cons(cons(quoteSym, SymbolRange(start, data++)), value);
+    }
     else {
       const char* start = data;
       while (*data && *data != ' ' &&
@@ -540,16 +545,17 @@ static value_t _table_has(value_t env, value_t args) {
 }
 
 static value_t _set(value_t env, value_t args) {
+  value_t value = Undefined;
   while (args.type == PairType) {
     value_t key = eval(env, car(args));
     args = cdr(args);
-    value_t value = eval(env, car(args));
+    value = eval(env, car(args));
     args = cdr(args);
     is_list(key) ?
       table_aset(env, key, value) :
       table_set(env, key, value);
   }
-  return True;
+  return value;
 }
 
 static value_t _table_set(value_t env, value_t args) {
@@ -576,7 +582,7 @@ static value_t _del(value_t env, value_t args) {
       table_adel(env, key) :
       table_del(env, key);
   }
-  return True;
+  return Undefined;
 }
 
 static value_t _table_del(value_t env, value_t args) {
@@ -661,9 +667,7 @@ int main() {
   table_set(repl, Symbol("version"), Symbol(VM_VERSION));
 
   const char** lines = (const char*[]) {
-    "(set 'jack.name 'Jack)",
-    "(set 'jack.age 10)",
-    "jack",
+    "\"Hello World\"",
     0
   };
 

@@ -14,6 +14,7 @@
   #define CPAREN ""
   #define CSEP ""
   #define CERROR ""
+  #define CSTRING ""
 #elif THEME == tim
   // Tim's Blue-Orange Theme (256 colors)
   #define COFF "\x1b[0m"
@@ -26,6 +27,7 @@
   #define CPAREN "\x1b[38;5;24m"
   #define CSEP "\x1b[38;5;26m"
   #define CERROR "\x1b[38;5;196m"
+  #define CSTRING "\x1b[38;5;77m"
 #elif THEME == jack
   // Jack's Shades-O-Green Theme (256 colors)
   #define COFF "\x1b[0m"
@@ -38,9 +40,10 @@
   #define CPAREN "\x1b[38;5;31m"
   #define CSEP "\x1b[38;5;160m"
   #define CERROR "\x1b[38;5;196m"
+  #define CSTRING "\x1b[38;5;77m"
 #else
   #define COFF "\x1b[0m"
-  #define CNIL "\x1b[1;36m"
+  #define CNIL "\x1b[0;37m"
   #define CBOOL "\x1b[1;33m"
   #define CINT "\x1b[1;35m"
   #define CSYM "\x1b[1;39m"
@@ -49,6 +52,7 @@
   #define CPAREN "\x1b[1;30m"
   #define CSEP "\x1b[1;34m"
   #define CERROR "\x16[1;31m"
+  #define CSTRING "\x1b[1;36m"
 #endif
 
 static value_t seen;
@@ -87,6 +91,18 @@ static void _dump(value_t val) {
       const char *opener, *closer;
       if (eq(pair.left, quoteSym)) {
         if (pair.right.type != PairType) {
+          if (pair.right.type == SymbolType && pair.right.data < 0) {
+            const char* data = symbols_get_name(pair.right.data);
+            const char* p = data;
+            bool whole = true;
+            while (whole && *p) whole = *p++ != ' ';
+            if (!whole) {
+              print(CSTRING"\"");
+              print(data);
+              print("\"");
+              return;
+            }
+          }
           print(CPAREN"'");
           _dump(pair.right);
           return;
