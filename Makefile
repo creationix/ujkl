@@ -1,4 +1,4 @@
-CFLAGS=-Wall -Wextra -pedantic -std=c11
+CFLAGS= -Wall -Wextra -pedantic -std=c11
 
 default:
 	$(CC) $(CFLAGS) -g main.c

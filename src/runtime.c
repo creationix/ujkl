@@ -92,7 +92,7 @@ API value_t eval(value_t env, value_t expr) {
     expr = expr.data < 0 ? table_get(env, expr) : expr;
   }
 
-  else if (is_list(expr)) {
+  else if (expr.type == PairType) {
     expr = apply(env, eval(env, car(expr)), cdr(expr));
   }
 #ifdef TRACE

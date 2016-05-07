@@ -93,8 +93,8 @@ API bool set_cdr(value_t var, value_t val) {
 
 API pair_t get_pair(value_t slot) {
   return (slot.type == PairType) ? pairs[slot.data] : (pair_t){
+    .right = TypeError,
     .left = TypeError,
-    .right = TypeError
   };
 }
 

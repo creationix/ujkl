@@ -4,7 +4,7 @@
 #define PAIRS_BLOCK_SIZE 16
 #define THEME tim
 // #define MAX_PINS 22
-#define TRACE
+// #define TRACE
 #define API static
 
 #include "src/data.c"
@@ -190,13 +190,6 @@ static value_t _list(value_t env, value_t args) {
 // }
 
 
-// Define a function
-// static value_t _def(value_t env, value_t args) {
-//   value_t key = car(args);
-//   value_t fn = cdr(args);
-//   set(env, key, fn);
-//   return key;
-// }
 
 
 static value_t _cons(value_t env, value_t args) {
@@ -488,56 +481,117 @@ static value_t _list_remove(value_t env, value_t args) {
   return list;
 }
 
-// static value_t _get(value_t env, value_t args) {
-//   value_t key = car(args);
-//   return notList(key) ? get(env, key) : aget(env, key);
-// }
+// Define a function
+static value_t _def(value_t env, value_t args) {
+  value_t key = car(args);
+  value_t fn = cdr(args);
+  is_list(key) ?
+    table_aset(env, key, fn) :
+    table_set(env, key, fn);
+  return key;
+}
 
-// static value_t _has(value_t env, value_t args) {
-//   bool found = true;
-//   while (args.type == PairType) {
-//     pair_t pair = pairs[args.data];
-//     value_t key = pair.left;
-//     value_t res = notList(key) ? has(env, key) : ahas(env, key);
-//     if (eq(res, TypeError)) return res;
-//     if (eq(res, False)) found = false;
-//     args = pair.right;
-//   }
-//   if (isNil(args)) return Bool(found);
-//   return TypeError;
-// }
+static value_t _is_table(value_t env, value_t args) {
+  value_t val = eval(env, car(args));
+  return Bool(is_table(val));
+}
 
-// static value_t _set(value_t env, value_t args) {
-//   while (args.type == PairType) {
-//     pair_t pair = pairs[args.data];
-//     value_t key = pair.left;
-//     if (pair.right.type != PairType) return TypeError;
-//     pair = pairs[pair.right.data];
-//     value_t value = eval(env, pair.left);
-//     value_t res = notList(key) ?
-//       set(env, key, value) :
-//       aset(env, key, value);
-//     if (eq(res, TypeError)) return res;
-//     args = pair.right;
-//   }
-//   if (isNil(args)) return True;
-//   return TypeError;
-// }
+static value_t _get(value_t env, value_t args) {
+  value_t key = eval(env, car(args));
+  return is_list(key) ?
+    table_aget(env, key) :
+    table_get(env, key);
+}
 
-// static value_t _del(value_t env, value_t args) {
-//   while (args.type == PairType) {
-//     pair_t pair = pairs[args.data];
-//     value_t key = pair.left;
-//     value_t res = notList(key) ?
-//       del(env, key) :
-//       adel(env, key);
-//     if (eq(res, TypeError)) return res;
-//     args = pair.right;
-//   }
-//   if (isNil(args)) return True;
-//   return TypeError;
-// }
+static value_t _table_get(value_t env, value_t args) {
+  value_t table = eval(env, car(args));
+  if (!is_table(table)) return TypeError;
+  value_t key = eval(env, car(cdr(args)));
+  return is_list(key) ?
+    table_aget(table, key) :
+    table_get(table, key);
+}
 
+static value_t _has(value_t env, value_t args) {
+  bool found = true;
+  while (found && args.type == PairType) {
+    value_t key = eval(env, car(args));
+    args = cdr(args);
+    found = is_list(key) ?
+      table_ahas(env, key) :
+      table_has(env, key);
+  }
+  return Bool(found);
+}
+
+static value_t _table_has(value_t env, value_t args) {
+  value_t table = eval(env, car(args));
+  if (!is_table(table)) return TypeError;
+  args = cdr(args);
+  bool found = true;
+  while (found && args.type == PairType) {
+    value_t key = eval(env, car(args));
+    args = cdr(args);
+    found = is_list(key) ?
+      table_ahas(table, key) :
+      table_has(table, key);
+  }
+  return Bool(found);
+}
+
+static value_t _set(value_t env, value_t args) {
+  while (args.type == PairType) {
+    value_t key = eval(env, car(args));
+    args = cdr(args);
+    value_t value = eval(env, car(args));
+    args = cdr(args);
+    is_list(key) ?
+      table_aset(env, key, value) :
+      table_set(env, key, value);
+  }
+  return True;
+}
+
+static value_t _table_set(value_t env, value_t args) {
+  value_t table = eval(env, car(args));
+  if (!is_table(table)) return TypeError;
+  args = cdr(args);
+  while (args.type == PairType) {
+    value_t key = eval(env, car(args));
+    args = cdr(args);
+    value_t value = eval(env, car(args));
+    args = cdr(args);
+    table = is_list(key) ?
+      table_aset(table, key, value) :
+      table_set(table, key, value);
+  }
+  return table;
+}
+
+static value_t _del(value_t env, value_t args) {
+  while (args.type == PairType) {
+    value_t key = eval(env, car(args));
+    args = cdr(args);
+    is_list(key) ?
+      table_adel(env, key) :
+      table_del(env, key);
+  }
+  return True;
+}
+
+static value_t _table_del(value_t env, value_t args) {
+  value_t table = eval(env, car(args));
+  if (!is_table(table)) return TypeError;
+  args = cdr(args);
+  while (args.type == PairType) {
+    value_t key = eval(env, car(args));
+    args = cdr(args);
+    table = is_list(key) ?
+      table_adel(table, key) :
+      table_del(table, key);
+  }
+  return table;
+}
 
 static const builtin_t *functions = (const builtin_t[]){
   {"print", _print},
@@ -549,7 +603,12 @@ static const builtin_t *functions = (const builtin_t[]){
   {"cdr", _cdr},
   {"set_car", _set_car},
   {"set_cdr", _set_cdr},
-  // {"set", _set},
+
+  {"get", _get},
+  {"has", _has},
+  {"del", _del},
+  {"set", _set},
+  {"def", _def},
 
   {"list?", _is_list},
   {"length?", _list_length},
@@ -564,13 +623,14 @@ static const builtin_t *functions = (const builtin_t[]){
   {"remove!", _list_remove},
   // - (sort list ((l r)...)->rank) -> list - sort a list with optional sort function
 
+  {"table?", _is_table},
+  {"t-get", _table_get},
+  {"t-has", _table_has},
+  {"t-del!", _table_del},
+  {"t-set!", _table_set},
 
   // {"map", _map},
   // {"each", _each},
-  // {"def", _def},
-  // {"has", _has},
-  // {"get", _get},
-  // {"del", _del},
 #ifdef MAX_PINS
   {"on", _on},
   {"off", _off},
@@ -601,20 +661,9 @@ int main() {
   table_set(repl, Symbol("version"), Symbol(VM_VERSION));
 
   const char** lines = (const char*[]) {
-    // "(append! nil 1 2 3)",
-    // "(append! [1] 2 3)",
-    // "(append! [1 2] 3)",
-    // "(sort [1 3 5 7 6 4 2 52 34 64 24 23])",
-    // "(add! [1 2] 3)",
-    // "(add! [1 2] 2)",
-    // "(add! nil 2)",
-    "(remove! nil 2)",
-    "(remove! [1 2 3] 2)",
-    "(remove! [1 2 3] 4)",
-    "(remove! [1] 1)",
-    "(has? nil 3)",
-    "(has? [1 2] 2)",
-    "(has? [1 2] 3)",
+    "(set 'jack.name 'Jack)",
+    "(set 'jack.age 10)",
+    "jack",
     0
   };
 
