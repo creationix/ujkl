@@ -40,7 +40,12 @@ There are very few primitives types in the runtime.  They are:
 - Function - A function is a list where the first value is a list of symbols
   for the parameters, everything after that is the body.
 
-## Environment variables
+## Keywords:
+
+These take the environment table as well as unevaluated arguments.  This means
+they can alter the environment or choose to not evaluate certain arguments.
+
+### Local Variables / Environment
 
 Here `key` can be a list of keys or a single key. If it's a list, each value
 will resolve using the result of the previous as the new table.
@@ -51,7 +56,18 @@ will resolve using the result of the previous as the new table.
 - (set key value ...)
 - (def key (params...) body...) - define a function
 
-## Cons Pair Operations
+### Control Flow
+
+- (if condition block...)
+- (else-if condition block...)
+- (else block...)
+- (while condition block...)
+
+## Functions
+
+Functions simply take a list of arguments (pre-evaluated) and return a value.
+
+### Cons Pair Operations
 
 - (car pair) -> value - return left side of pair
 - (cdr pair) -> value - return right side of pair
@@ -67,7 +83,7 @@ bool set_car(value_t pair, value_t val);
 bool set_cdr(value_t pair, value_t val);
 ```
 
-## List Operations
+### List Operations
 
 A list is a singly-linked list of cons pairs where the data is on the left side
 and a reference to the next node is on the right.
@@ -104,7 +120,7 @@ value_t list_add(value_t list, value_t val);
 value_t list_remove(value_t list, value_t val);
 ```
 
-## Table Operations
+### Table Operations
 
 - in all these `key` can be a list of keys or a key
 
@@ -127,7 +143,7 @@ value_t table_adel(value_t tab, value_t keys);
 value_t table_set(value_t tab, value_t key, value);
 ```
 
-## Iterators
+### Iterators
 
 - If iter is list, loop through each item
 - If iter is positive number, loop from 0 to number -1
@@ -142,16 +158,11 @@ value_t table_set(value_t tab, value_t key, value);
 value_t list_each(value_t list, value_t context, api_fn block);
 value_t list_map(value_t list, value_t context, api_fn block);
 value_t list_filter(value_t list, value_t context, api_fn block);
+value_t list_filter_map(value_t list, value_t context, api_fn block);
 ```
 
-## Control Flow
 
-- (if condition block...)
-- (else-if condition block...)
-- (else block...)
-- (while condition block...)
-
-## Integer Math
+### Integer Math
 
 - (+ number...) -> number - Add numbers
 - (* number...) -> number - multiply numbers
@@ -168,7 +179,7 @@ void deadbeef_seed(int seed);
 int deadbeef_rand();
 ```
 
-## Comparison
+### Comparison
 
 Values must be of same type, numbers can compare with numbers, symbols compare
 alphabetically, pairs compare by contents recursively, left first, then right.
@@ -182,7 +193,7 @@ If types don't match, != will false, = will true, others type-error.
 - (!= a b) -> bool - check if values are different
 - (= a b) -> bool check if values are equal
 
-## Logic
+### Logic
 
 Truthyness is defined as:
 
@@ -198,11 +209,11 @@ bool to_bool(value_t val);
 - (xor a b) -> value - returns false if values are both truthy, truthy value otherwise
 - (not a) -> bool - negates
 
-## Console/Serial I/O
+### Console/Serial I/O
 
 - (print value...) dump values separated by spaces
 
-## PubSub Mesh Communication
+### PubSub Mesh Communication
 
 Nodes can live within a network and communicate via pubsub system.
 
@@ -211,7 +222,7 @@ Nodes can live within a network and communicate via pubsub system.
 - (net-when name ((data)...)) -> handle - Setup listener callback
 - (net-stop handle) - remove listener
 
-## GPIO
+### GPIO
 
 Low level access to digital GPOIs.  This is great for controlling LEDs and
 reading buttons.
@@ -223,7 +234,7 @@ reading buttons.
   changes value.
 - (gpio-stop handle) - remove listener
 
-## I2C
+### I2C
 
 This allows writing drivers for I2C devices in the scripting language!
 
@@ -235,7 +246,7 @@ This allows writing drivers for I2C devices in the scripting language!
 - (i2c-slave-write addr bytes) -> bool - high level write command
 - (i2c-slave-read addr data len) -> bytes - high level read command
 
-## WS2812
+### WS2812
 
 If we can get away with it, this allows streaming of neopixel values.
 
@@ -250,7 +261,7 @@ commands.
 - (ws2812-rgb-list pin colors)
 - (ws2812-rgbw-list pin colors)
 
-## Tone
+### Tone
 
 Generate a square wave by flipping a digital pin at a frequency.
 
