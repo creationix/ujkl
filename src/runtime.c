@@ -51,7 +51,7 @@ static value_t __eval(value_t env, value_t val) {
   value_t head = next(&val);
   if (head.type == SymbolType && head.data >= 0 && head.data < first_fn) {
     // For keywords, inject environment and don't evaluate arguments.
-    return apply(cons(head, cons(env, val)));
+    return apply(head, cons(env, val));
   }
   // For everything else, pre-eval the arguments.
   value_t copy = cons(eval(env, head), Nil);
@@ -67,7 +67,8 @@ static value_t __eval(value_t env, value_t val) {
     full_dump(copy);
   #endif
   // And apply as normal
-  return apply(copy);
+  head = next(&copy);
+  return apply(head, copy);
 }
 
 API value_t eval(value_t env, value_t val) {
@@ -96,8 +97,7 @@ API value_t block(value_t env, value_t body) {
 }
 
 // args is fn followed by arguments to apply to fn
-API value_t apply(value_t args) {
-  value_t fn = next(&args);
+API value_t apply(value_t fn, value_t args) {
   // Native function.
   if (fn.type == SymbolType && fn.data >= 0) {
     api_fn native = symbols_get_fn(fn.data);

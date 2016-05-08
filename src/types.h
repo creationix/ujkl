@@ -115,7 +115,7 @@ API bool isFree(pair_t pair);
 
 API value_t eval(value_t env, value_t val);
 API value_t block(value_t env, value_t body);
-API value_t apply(value_t args);
+API value_t apply(value_t fn, value_t args);
 
 // Lists
 API bool is_list(value_t val);
@@ -147,7 +147,8 @@ API value_t table_del(value_t map, value_t key);
 API value_t table_adel(value_t map, value_t keys);
 
 // Iterators
-// API value_t iter_any(value_t iter, value_t ctx, api_fn fn);
+typedef void (*callback_t)(value_t ctx, value_t item);
+API void iter_any(value_t iter, value_t ctx, callback_t fn);
 
 
 #endif

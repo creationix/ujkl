@@ -4,13 +4,13 @@
 #define PAIRS_BLOCK_SIZE 16
 #define THEME tim
 // #define MAX_PINS 22
-#define TRACE
+// #define TRACE
 #define API static
 
 #include "src/data.c"
 #include "src/lists.c"
 #include "src/tables.c"
-// #include "src/iter.c"
+#include "src/iter.c"
 #include "src/dump.c"
 #include "src/editor.c"
 #include "src/print.c"
@@ -529,6 +529,44 @@ static value_t _table_del(value_t args) {
   return table;
 }
 
+static void each_callback(value_t ctx, value_t item) {
+  set_cdr(ctx, apply(car(ctx), item));
+}
+
+static value_t _iter_each(value_t args) {
+  value_t iter = next(&args);
+  value_t fn = next(&args);
+  value_t ctx = cons(fn, Undefined);
+  iter_any(iter, ctx, each_callback);
+  return cdr(ctx);
+}
+
+static void map_callback(value_t ctx, value_t item) {
+  set_cdr(ctx, cons(apply(car(ctx), item), cdr(ctx)));
+}
+
+static value_t _iter_map(value_t args) {
+  value_t iter = next(&args);
+  value_t fn = next(&args);
+  value_t ctx = cons(fn, Nil);
+  iter_any(iter, ctx, map_callback);
+  return list_reverse(cdr(ctx));
+}
+
+static void filter_callback(value_t ctx, value_t item) {
+  if (isTruthy(apply(car(ctx), item))) {
+    set_cdr(ctx, cons(car(item), cdr(ctx)));
+  }
+}
+
+static value_t _iter_filter(value_t args) {
+  value_t iter = next(&args);
+  value_t fn = next(&args);
+  value_t ctx = cons(fn, Nil);
+  iter_any(iter, ctx, filter_callback);
+  return list_reverse(cdr(ctx));
+}
+
 static const builtin_t *functions = (const builtin_t[]){
   {"get", _get},
   {"has", _has},
@@ -583,11 +621,9 @@ static const builtin_t *functions = (const builtin_t[]){
   {"=", _eq},
   {"!=", _neq},
 
-  //
-  // {"each", _iter_each},
-  // {"map", _iter_map},
-  // {"filter", _iter_filter},
-  //
+  {"each", _iter_each},
+  {"map", _iter_map},
+  {"filter", _iter_filter},
 
   {0,0},
 };
@@ -604,8 +640,15 @@ int main() {
   table_set(repl, Symbol("version"), Symbol(VM_VERSION));
 
   const char** lines = (const char*[]) {
-    "(def id (n) n)",
-    "(id 10)",
+    "(def *10 (n) (* n 10))",
+    "(*10 13)",
+    "(def even (n) (= 0 (% n 2)))",
+    "(even 1)",
+    "(even 2)",
+    "(each 5 print)",
+    "(map 5 *10)",
+    "(filter 10 even)",
+    "(each (map (filter 10 even) *10) print)",
     0
   };
 
@@ -614,7 +657,6 @@ int main() {
   for (int i = 0; lines[i]; i++) {
     parse(lines[i]);
   }
-
 
   // Start the repl
   onLine = parse;
