@@ -64,28 +64,28 @@ API value_t list_sort(value_t list) {
     cons(pair.left, list_sort(after)));
 }
 
-API value_t list_custom_sort(value_t list, value_t ctx, api_fn sorter) {
-  if (isNil(list)) return Nil;
-  if (list.type != PairType) return Undefined;
-  value_t before = Nil, after = Nil;
-  pair_t pair = get_pair(list);
-  value_t node = pair.right;
-  while (node.type == PairType) {
-    pair_t next = get_pair(node);
-    if (pair.left.raw < next.left.raw) {
-      before = cons(next.left, before);
-    }
-    else {
-      after = cons(next.left, after);
-    }
-    node = next.right;
-  }
-  return list_append(
-    list_custom_sort(before, ctx, sorter),
-    cons(pair.left, list_custom_sort(after, ctx, sorter))
-  );
-
-}
+// API value_t list_custom_sort(value_t list, value_t ctx, api_fn sorter) {
+//   if (isNil(list)) return Nil;
+//   if (list.type != PairType) return Undefined;
+//   value_t before = Nil, after = Nil;
+//   pair_t pair = get_pair(list);
+//   value_t node = pair.right;
+//   while (node.type == PairType) {
+//     pair_t next = get_pair(node);
+//     if (isTruthy(sorter(ctx, List(pair.left, pair.right)))) {
+//       before = cons(next.left, before);
+//     }
+//     else {
+//       after = cons(next.left, after);
+//     }
+//     node = next.right;
+//   }
+//   return list_append(
+//     list_custom_sort(before, ctx, sorter),
+//     cons(pair.left, list_custom_sort(after, ctx, sorter))
+//   );
+//
+// }
 
 API value_t list_get(value_t list, int index) {
   if (index < 0) return Undefined;
@@ -146,44 +146,30 @@ API value_t list_remove(value_t list, value_t val) {
   return list;
 }
 
-API value_t list_each_r(value_t list, value_t context, api_fn block) {
-  value_t result = Undefined;
-  while (list.type == PairType) {
-    pair_t pair = get_pair(list);
-    result = block(context, pair.left);
-    list = pair.right;
-  }
-  return result;
-}
-API value_t list_each(value_t list, value_t context, api_fn block) {
-  return list_reverse(list_each_r(list, context, block));
-}
-API value_t list_map_r(value_t list, value_t context, api_fn block) {
-  value_t result = Nil;
-  while (list.type == PairType) {
-    pair_t pair = get_pair(list);
-    result = cons(block(context, pair.left), result);
-    list = pair.right;
-  }
-  return result;
-}
-API value_t list_map(value_t list, value_t context, api_fn block) {
-  return list_reverse(list_map_r(list, context, block));
-}
-API value_t list_filter_r(value_t list, value_t context, api_fn block) {
-  value_t result = Nil;
-  while (list.type == PairType) {
-    pair_t pair = get_pair(list);
-    if (isTruthy(block(context, pair.left))) {
-      result = cons(pair.left, result);
-    }
-    list = pair.right;
-  }
-  return result;
-}
-API value_t list_filter(value_t list, value_t context, api_fn block) {
-  return list_reverse(list_filter_r(list, context, block));
-}
+// API value_t list_each_r(value_t list, value_t context, api_fn block) {
+//   value_t result = Undefined;
+//   while (list.type == PairType) {
+//     pair_t pair = get_pair(list);
+//     result = block(context, pair.left);
+//     list = pair.right;
+//   }
+//   return result;
+// }
+// API value_t list_each(value_t list, value_t context, api_fn block) {
+//   return list_reverse(list_each_r(list, context, block));
+// }
+// API value_t list_map_r(value_t list, value_t context, api_fn block) {
+//   value_t result = Nil;
+//   while (list.type == PairType) {
+//     pair_t pair = get_pair(list);
+//     result = cons(block(context, pair.left), result);
+//     list = pair.right;
+//   }
+//   return result;
+// }
+// API value_t list_map(value_t list, value_t context, api_fn block) {
+//   return list_reverse(list_map_r(list, context, block));
+// }
 
 
 #endif

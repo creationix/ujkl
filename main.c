@@ -4,12 +4,13 @@
 #define PAIRS_BLOCK_SIZE 16
 #define THEME tim
 // #define MAX_PINS 22
-// #define TRACE
+#define TRACE
 #define API static
 
 #include "src/data.c"
 #include "src/lists.c"
 #include "src/tables.c"
+// #include "src/iter.c"
 #include "src/dump.c"
 #include "src/editor.c"
 #include "src/print.c"
@@ -33,11 +34,6 @@ static value_t getSymbols(const char* start, const char* end) {
   }
   if (isNil(parts)) return SymbolRange(start, end);
   return list_reverse(cons(SymbolRange(s,end), parts));
-}
-
-static value_t eval_dump_fn(value_t env, value_t val) {
-  dump(eval(env, val));
-  return Nil;
 }
 
 static void parse(const char *data) {
@@ -164,393 +160,332 @@ static void parse(const char *data) {
   print("\r\x1b[K");
   print(prompt);
   dump_line(value);
-  list_each(value, repl, eval_dump_fn);
+  while (value.type == PairType) {
+    dump(eval(repl, next(&value)));
+  }
 }
 
 // Passes values through unaffected
-static value_t _quote(value_t env, value_t args) {
-  (void)(env);
-  return args;
+static value_t _quote(value_t args) {
+  return cdr(args);
 }
 
 // Evals values, but otherwise passes them through
-static value_t _list(value_t env, value_t args) {
-  return list_map(args, env, eval);
+static value_t _list(value_t args) {
+  return args;
 }
 
-// static value_t call_fn(value_t env_fn, value_t value) {
-//   value_t env = car(env_fn);
-//   value_t fn = cdr(env_fn);
-//   return apply(env, fn, cons(value, Nil));
-// }
-
-// static value_t _map(value_t env, value_t args) {
-//   var2(env, args, list, fn);
-//   return map(cons(env, fn), list, call_fn);
-// }
-//
-// static value_t _each(value_t env, value_t args) {
-//   var2(env, args, list, fn);
-//   return each(cons(env, fn), list, call_fn);
-// }
-
-
-
-
-static value_t _cons(value_t env, value_t args) {
-  var2(env, args, a, b)
+static value_t _cons(value_t args) {
+  value_t a = next(&args);
+  value_t b = next(&args);
   return cons(a, b);
 }
 
-static value_t _car(value_t env, value_t args) {
-  var1(env, args, a)
+static value_t _car(value_t args) {
+  value_t a = next(&args);
   return car(a);
 }
 
-static value_t _cdr(value_t env, value_t args) {
-  var1(env, args, a)
+static value_t _cdr(value_t args) {
+  value_t a = next(&args);
   return cdr(a);
 }
 
-static value_t _set_car(value_t env, value_t args) {
-  var2(env, args, a, b)
+static value_t _set_car(value_t args) {
+  value_t a = next(&args);
+  value_t b = next(&args);
   return Bool(set_car(a, b));
 }
 
-static value_t _set_cdr(value_t env, value_t args) {
-  var2(env, args, a, b)
+static value_t _set_cdr(value_t args) {
+  value_t a = next(&args);
+  value_t b = next(&args);
   return Bool(set_cdr(a, b));
 }
 
-// static value_t _add(value_t env, value_t args) {
-//   int sum = 0;
-//   while (args.type == PairType) {
-//     pair_t pair = get_pair(args);
-//     value_t value = eval(env, pair.left);
-//     if (value.type == IntegerType) {
-//       sum += value.data;
-//     }
-//     args = pair.right;
-//   }
-//   return Integer(sum);
-// }
-//
-// static value_t _mul(value_t env, value_t args) {
-//   int sum = 1;
-//   while (args.type == PairType) {
-//     pair_t pair = get_pair(args);
-//     value_t value = eval(env, pair.left);
-//     if (value.type == IntegerType) {
-//       sum *= value.data;
-//     }
-//     args = pair.right;
-//   }
-//   return Integer(sum);
-// }
-//
-// static value_t _sub(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   if (a.type == IntegerType && b.type == IntegerType) {
-//     return Integer(a.data - b.data);
-//   }
-//   return Undefined;
-// }
-//
-// static value_t _div(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   if (a.type == IntegerType && b.type == IntegerType) {
-//     return Integer(a.data / b.data);
-//   }
-//   return Undefined;
-// }
-//
-// static value_t _mod(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   if (a.type == IntegerType && b.type == IntegerType) {
-//     return Integer(a.data % b.data);
-//   }
-//   return Undefined;
-// }
-
-// static value_t _lt(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   if (a.type == IntegerType && b.type == IntegerType) {
-//     return Bool(a.data < b.data);
-//   }
-//   return Undefined;
-// }
-//
-// static value_t _lte(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   if (a.type == IntegerType && b.type == IntegerType) {
-//     return Bool(a.data <= b.data);
-//   }
-//   return Undefined;
-// }
-//
-// static value_t _gt(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   if (a.type == IntegerType && b.type == IntegerType) {
-//     return Bool(a.data > b.data);
-//   }
-//   return Undefined;
-// }
-//
-// static value_t _gte(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   if (a.type == IntegerType && b.type == IntegerType) {
-//     return Bool(a.data >= b.data);
-//   }
-//   return Undefined;
-// }
-//
-// static value_t _eq(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   return Bool(eq(a,b));
-// }
-//
-// static value_t _neq(value_t env, value_t args) {
-//   var2(env, args, a, b)
-//   return Bool(!eq(a,b));
-// }
-
-static value_t _print(value_t env, value_t args) {
-  return list_each(args, env, eval_dump_fn);
-}
-
-// fn1(_ilen, list, return ilen(list);)
-// fn2(_iget, list, key, return iget(list, key);)
-// fn3(_iset, list, key, value, return iset(list, key, value);)
-
-#ifdef MAX_PINS
-static bool exported[MAX_PINS];
-static bool direction[MAX_PINS]; // false - in, true - out
-
-const char* pinnums[] = {
-  "00","01","02","03","04","05","06","07","08","09",
-  "10","11","12","13","14","15","16","17","18","19",
-  "20","21"};
-
-static bool setup_pin(int pin, bool dir) {
-  if (pin < 0 || pin >= MAX_PINS) return true;
-  if (!exported[pin]) {
-    exported[pin] = true;
-    print("Exporting pin ");
-    print_int(pin);
-    print_char('\n');
-    int fd = open("/sys/class/gpio/export", O_WRONLY);
-    write(fd, pinnums[pin], 2);
-    close(fd);
+static value_t _add(value_t args) {
+  int sum = 0;
+  while (args.type == PairType) {
+    value_t value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    sum += value.data;
   }
-  if (direction[pin] != dir) {
-    direction[pin] = dir;
-    print("Setting direction on ");
-    print_int(pin);
-    print(" to ");
-    print(dir ? "OUT" : "IN");
-    print_char('\n');
-    int fd = open("/sys/class/gpio/export", O_WRONLY);
-    write(fd, pinnums[pin], 2);
-    close(fd);
+  return Integer(sum);
+}
+
+static value_t _sub(value_t args) {
+  value_t value = next(&args);
+  if (value.type != IntegerType) return TypeError;
+  int sum = value.data;
+  while (args.type == PairType) {
+    value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    sum -= value.data;
   }
-  return false;
+  return Integer(sum);
 }
 
-static bool write_pin(int pin, bool state) {
-  if (setup_pin(pin, true)) return true;
-  print("Setting state of ");
-  print_int(pin);
-  print(" to ");
-  print(state ? "HIGH" : "LOW");
-  print_char('\n');
-  return false;
+static value_t _mul(value_t args) {
+  int product = 1;
+  while (args.type == PairType) {
+    value_t value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    product *= value.data;
+  }
+  return Integer(product);
 }
 
+static value_t _div(value_t args) {
+  value_t value = next(&args);
+  if (value.type != IntegerType) return TypeError;
+  int product = value.data;
+  while (args.type == PairType) {
+    value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    product /= value.data;
+  }
+  return Integer(product);
+}
 
-static value_t _on(value_t env, value_t args) {
-  var1(env, args, pin)
-  if (pin.type != IntegerType) return TypeError;
-  if (write_pin(pin.data, true)) return RangeError;
+static value_t _mod(value_t args) {
+  value_t a = next(&args);
+  value_t b = next(&args);
+  if (a.type != IntegerType || b.type != IntegerType) {
+    return TypeError;
+  }
+  return Integer(a.data % b.data);
+}
+
+static value_t _lt(value_t args) {
+  value_t value = next(&args);
+  if (value.type != IntegerType) return TypeError;
+  int last = value.data;
+  while (args.type == PairType) {
+    value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    if (last >= value.data) return False;
+    last = value.data;
+  }
   return True;
 }
-static value_t _off(value_t env, value_t args) {
-  var1(env, args, pin)
-  if (pin.type != IntegerType) return TypeError;
-  if (write_pin(pin.data, false)) return RangeError;
-  return False;
-}
-/*
-static value_t _toggle(value_t env, value_t args) {
-}
-static value_t _read(value_t env, value_t args) {
-}
-static value_t _write(value_t env, value_t args) {
-}
-*/
 
-#endif
-
-static value_t _is_list(value_t env, value_t args) {
-  return Bool(is_list(eval(env, car(args))));
+static value_t _lte(value_t args) {
+  value_t value = next(&args);
+  if (value.type != IntegerType) return TypeError;
+  int last = value.data;
+  while (args.type == PairType) {
+    value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    if (last > value.data) return False;
+    last = value.data;
+  }
+  return True;
 }
-static value_t _list_length(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+
+static value_t _gt(value_t args) {
+  value_t value = next(&args);
+  if (value.type != IntegerType) return TypeError;
+  int last = value.data;
+  while (args.type == PairType) {
+    value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    if (last <= value.data) return False;
+    last = value.data;
+  }
+  return True;
+}
+
+static value_t _gte(value_t args) {
+  value_t value = next(&args);
+  if (value.type != IntegerType) return TypeError;
+  int last = value.data;
+  while (args.type == PairType) {
+    value = next(&args);
+    if (value.type != IntegerType) return TypeError;
+    if (last < value.data) return False;
+    last = value.data;
+  }
+  return True;
+}
+
+static value_t _eq(value_t args) {
+  value_t value = next(&args);
+  while (args.type == PairType) {
+    if (!eq(value, next(&args))) return False;
+  }
+  return True;
+}
+
+static value_t _neq(value_t args) {
+  value_t value = next(&args);
+  while (args.type == PairType) {
+    if (eq(value, next(&args))) return False;
+  }
+  return True;
+}
+
+static value_t _print(value_t args) {
+  dump_line(args);
+  return Undefined;
+}
+
+static value_t _eval(value_t args) {
+  value_t code = next(&args);
+  value_t env = next(&args);
+  return eval(env, code);
+}
+
+static value_t _is_list(value_t args) {
+  return Bool(is_list(next(&args)));
+}
+static value_t _list_length(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
   return Integer(list_length(list));
 }
-static value_t _list_reverse(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_reverse(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
   return list_reverse(list);
 }
-static value_t _list_append(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_append(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
-  return list_append(list, list_map(cdr(args), env, eval));
+  return list_append(list, args);
 }
-static value_t _list_concat(value_t env, value_t args) {
+static value_t _list_concat(value_t args) {
   value_t lists = Nil;
   while (args.type == PairType) {
-    pair_t pair = get_pair(args);
-    value_t list = eval(env, pair.left);
+    value_t list = next(&args);
     if (!is_list(list)) return TypeError;
     lists = cons(list, lists);
-    args = pair.right;
   }
-  if (!isNil(args)) return TypeError;
   value_t combined = Nil;
   while (lists.type == PairType) {
-    pair_t pair = get_pair(lists);
-    combined = list_append(pair.left, combined);
-    lists = pair.right;
+    combined = list_append(next(&lists), combined);
   }
   return combined;
 }
 
-static value_t _list_sort(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_sort(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
   return list_sort(list);
 }
 
-static value_t _list_iget(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_iget(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
-  value_t index = eval(env, car(cdr(args)));
+  value_t index = next(&args);
   if (index.type != IntegerType) return TypeError;
   return list_get(list, index.data);
 }
 
-static value_t _list_iset(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_iset(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
-  args = cdr(args);
-  value_t index = eval(env, car(args));
+  value_t index = next(&args);
   if (index.type != IntegerType) return TypeError;
-  args = cdr(args);
-  value_t value = car(args);
+  value_t value = next(&args);
   return list_set(list, index.data, value);
 }
 
-static value_t _list_has(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_has(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
-  args = cdr(args);
-  bool has = true;
-  while (has && args.type == PairType) {
-    has = list_has(list, eval(env, car(args)));
-    args = cdr(args);
+  while (args.type == PairType) {
+    if (!list_has(list, next(&args))) return False;
   }
-  return Bool(has);
+  return True;
 }
 
-static value_t _list_add(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_add(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
-  args = cdr(args);
   while (args.type == PairType) {
-    list = list_add(list, eval(env, car(args)));
-    args = cdr(args);
+    list = list_add(list, next(&args));
   }
   return list;
 }
 
-static value_t _list_remove(value_t env, value_t args) {
-  value_t list = eval(env, car(args));
+static value_t _list_remove(value_t args) {
+  value_t list = next(&args);
   if (!is_list(list)) return TypeError;
-  args = cdr(args);
   while (args.type == PairType) {
-    list = list_remove(list, eval(env, car(args)));
-    args = cdr(args);
+    list = list_remove(list, next(&args));
   }
   return list;
 }
 
 // Define a function
-static value_t _def(value_t env, value_t args) {
-  value_t key = car(args);
-  value_t fn = cdr(args);
+static value_t _def(value_t args) {
+  value_t env = next(&args);
+  value_t key = next(&args);
   is_list(key) ?
-    table_aset(env, key, fn) :
-    table_set(env, key, fn);
+    table_aset(env, key, args) :
+    table_set(env, key, args);
   return key;
 }
 
-static value_t _is_table(value_t env, value_t args) {
-  value_t val = eval(env, car(args));
-  return Bool(is_table(val));
+static value_t _do(value_t args) {
+  value_t env = next(&args);
+  return block(env, args);
 }
 
-static value_t _get(value_t env, value_t args) {
-  value_t key = eval(env, car(args));
+static value_t _is_table(value_t args) {
+  return Bool(is_table(next(&args)));
+}
+
+static value_t _get(value_t args) {
+  value_t env = next(&args);
+  value_t key = eval(env, next(&args));
   return is_list(key) ?
     table_aget(env, key) :
     table_get(env, key);
 }
 
-static value_t _table_get(value_t env, value_t args) {
-  value_t table = eval(env, car(args));
+static value_t _table_get(value_t args) {
+  value_t table = next(&args);
   if (!is_table(table)) return TypeError;
-  value_t key = eval(env, car(cdr(args)));
+  value_t key = next(&args);
   return is_list(key) ?
     table_aget(table, key) :
     table_get(table, key);
 }
 
-static value_t _has(value_t env, value_t args) {
-  bool found = true;
-  while (found && args.type == PairType) {
-    value_t key = eval(env, car(args));
-    args = cdr(args);
-    found = is_list(key) ?
-      table_ahas(env, key) :
-      table_has(env, key);
+static value_t _has(value_t args) {
+  value_t env = next(&args);
+  while (args.type == PairType) {
+    value_t key = eval(env, next(&args));
+    if (!(is_list(key) ?
+        table_ahas(env, key) :
+        table_has(env, key))) {
+      return False;
+    }
   }
-  return Bool(found);
+  return True;
 }
 
-static value_t _table_has(value_t env, value_t args) {
-  value_t table = eval(env, car(args));
+static value_t _table_has(value_t args) {
+  value_t table = next(&args);
   if (!is_table(table)) return TypeError;
-  args = cdr(args);
-  bool found = true;
-  while (found && args.type == PairType) {
-    value_t key = eval(env, car(args));
-    args = cdr(args);
-    found = is_list(key) ?
-      table_ahas(table, key) :
-      table_has(table, key);
+  while (args.type == PairType) {
+    value_t key = next(&args);
+    if (!(is_list(key) ?
+        table_ahas(table, key) :
+        table_has(table, key))) {
+      return False;
+    }
   }
-  return Bool(found);
+  return True;
 }
 
-static value_t _set(value_t env, value_t args) {
+static value_t _set(value_t args) {
+  value_t env = next(&args);
   value_t value = Undefined;
   while (args.type == PairType) {
-    value_t key = eval(env, car(args));
-    args = cdr(args);
-    value = eval(env, car(args));
-    args = cdr(args);
+    value_t key = eval(env, next(&args));
+    value = eval(env, next(&args));
     is_list(key) ?
       table_aset(env, key, value) :
       table_set(env, key, value);
@@ -558,15 +493,12 @@ static value_t _set(value_t env, value_t args) {
   return value;
 }
 
-static value_t _table_set(value_t env, value_t args) {
-  value_t table = eval(env, car(args));
+static value_t _table_set(value_t args) {
+  value_t table = next(&args);
   if (!is_table(table)) return TypeError;
-  args = cdr(args);
   while (args.type == PairType) {
-    value_t key = eval(env, car(args));
-    args = cdr(args);
-    value_t value = eval(env, car(args));
-    args = cdr(args);
+    value_t key = next(&args);
+    value_t value = next(&args);
     table = is_list(key) ?
       table_aset(table, key, value) :
       table_set(table, key, value);
@@ -574,10 +506,10 @@ static value_t _table_set(value_t env, value_t args) {
   return table;
 }
 
-static value_t _del(value_t env, value_t args) {
+static value_t _del(value_t args) {
+  value_t env = next(&args);
   while (args.type == PairType) {
-    value_t key = eval(env, car(args));
-    args = cdr(args);
+    value_t key = eval(env, next(&args));
     is_list(key) ?
       table_adel(env, key) :
       table_del(env, key);
@@ -585,13 +517,11 @@ static value_t _del(value_t env, value_t args) {
   return Undefined;
 }
 
-static value_t _table_del(value_t env, value_t args) {
-  value_t table = eval(env, car(args));
+static value_t _table_del(value_t args) {
+  value_t table = next(&args);
   if (!is_table(table)) return TypeError;
-  args = cdr(args);
   while (args.type == PairType) {
-    value_t key = eval(env, car(args));
-    args = cdr(args);
+    value_t key = next(&args);
     table = is_list(key) ?
       table_adel(table, key) :
       table_del(table, key);
@@ -600,21 +530,34 @@ static value_t _table_del(value_t env, value_t args) {
 }
 
 static const builtin_t *functions = (const builtin_t[]){
-  {"print", _print},
-  {"list", _list},
+  {"get", _get},
+  {"has", _has},
+  {"del", _del},
+  {"set", _set},
+  {"def", _def},
+  {"do", _do},
+  // if
+  // else-if
+  // else
+  // while
   {"quote", _quote},
-  {"eval", eval},
+  /////////////////////
+
+  {"list", _list},
+  {"print", _print},
+  {"eval", _eval},
+
   {"cons", _cons},
   {"car", _car},
   {"cdr", _cdr},
   {"set_car", _set_car},
   {"set_cdr", _set_cdr},
 
-  {"get", _get},
-  {"has", _has},
-  {"del", _del},
-  {"set", _set},
-  {"def", _def},
+  {"table?", _is_table},
+  {"t-get", _table_get},
+  {"t-has", _table_has},
+  {"t-del!", _table_del},
+  {"t-set!", _table_set},
 
   {"list?", _is_list},
   {"length?", _list_length},
@@ -627,37 +570,31 @@ static const builtin_t *functions = (const builtin_t[]){
   {"has?", _list_has},
   {"add!", _list_add},
   {"remove!", _list_remove},
-  // - (sort list ((l r)...)->rank) -> list - sort a list with optional sort function
 
-  {"table?", _is_table},
-  {"t-get", _table_get},
-  {"t-has", _table_has},
-  {"t-del!", _table_del},
-  {"t-set!", _table_set},
+  {"+", _add},
+  {"-", _sub},
+  {"*", _mul},
+  {"/", _div},
+  {"%", _mod},
+  {"<", _lt},
+  {"<=", _lte},
+  {">", _gt},
+  {">=", _gte},
+  {"=", _eq},
+  {"!=", _neq},
 
-  // {"map", _map},
-  // {"each", _each},
-#ifdef MAX_PINS
-  {"on", _on},
-  {"off", _off},
-#endif
-  // {"+", _add},
-  // {"-", _sub},
-  // {"*", _mul},
-  // {"/", _div},
-  // {"%", _mod},
-  // {"<", _lt},
-  // {"<=", _lte},
-  // {">", _gt},
-  // {">=", _gte},
-  // {"=", _eq},
-  // {"!=", _neq},
+  //
+  // {"each", _iter_each},
+  // {"map", _iter_map},
+  // {"filter", _iter_filter},
+  //
+
   {0,0},
 };
 
 int main() {
   // Initialize symbol system with our builtins.
-  symbols_init(functions);
+  symbols_init(functions, 7);
   quoteSym = Symbol("quote");
   listSym = Symbol("list");
 
@@ -667,7 +604,8 @@ int main() {
   table_set(repl, Symbol("version"), Symbol(VM_VERSION));
 
   const char** lines = (const char*[]) {
-    "\"Hello World\"",
+    "(def id (n) n)",
+    "(id 10)",
     0
   };
 

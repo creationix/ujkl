@@ -98,6 +98,13 @@ API pair_t get_pair(value_t slot) {
   };
 }
 
+API value_t next(value_t *args) {
+  if (isNil(*args)) return Undefined;
+  pair_t pair = get_pair(*args);
+  *args = pair.right;
+  return pair.left;
+}
+
 API bool eq(value_t a, value_t b) {
   return a.raw == b.raw;
 }

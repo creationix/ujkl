@@ -49,7 +49,7 @@ typedef union {
   uint64_t raw;
 } pair_t;
 
-typedef value_t (*api_fn)(value_t env, value_t args);
+typedef value_t (*api_fn)(value_t args);
 typedef void (*read_fn)(const char *data);
 
 typedef struct {
@@ -67,7 +67,8 @@ API bool print_string(const char* value, size_t len);
 API void print_flush();
 
 // Symbol library for resolving between integers and cstrings.
-API void symbols_init(const builtin_t *fns);
+API int first_fn;
+API void symbols_init(const builtin_t *fns, int numKeywords);
 API int symbols_set(const char *word, size_t len);
 API const char *symbols_get_name(int index);
 API api_fn symbols_get_fn(int index);
@@ -95,6 +96,7 @@ API void dump_line(value_t val);
   node; })
 #define Mapping(name, value) cons(Symbol(#name),value)
 API pair_t get_pair(value_t slot);
+API value_t next(value_t *args);
 API value_t Bool(bool val);
 API value_t Integer(int32_t val);
 API value_t Symbol(const char* sym);
@@ -111,24 +113,26 @@ API bool isNil(value_t value);
 API bool isTruthy(value_t value);
 API bool isFree(pair_t pair);
 
+API value_t eval(value_t env, value_t val);
+API value_t block(value_t env, value_t body);
+API value_t apply(value_t args);
+
 // Lists
 API bool is_list(value_t val);
 API int list_length(value_t list);
 API value_t list_reverse(value_t list);
 API value_t list_append(value_t list, value_t values);
 API value_t list_sort(value_t list);
-API value_t list_custom_sort(value_t list, value_t ctx, api_fn sorter);
+// API value_t list_custom_sort(value_t list, value_t ctx, api_fn sorter);
 API value_t list_get(value_t list, int index);
 API value_t list_set(value_t list, int index, value_t value);
 API bool list_has(value_t list, value_t val);
 API value_t list_add(value_t list, value_t val);
 API value_t list_remove(value_t list, value_t val);
-API value_t list_each_r(value_t list, value_t context, api_fn block);
-API value_t list_each(value_t list, value_t context, api_fn block);
-API value_t list_map_r(value_t list, value_t context, api_fn block);
-API value_t list_map(value_t list, value_t context, api_fn block);
-API value_t list_filter_r(value_t list, value_t context, api_fn block);
-API value_t list_filter(value_t list, value_t context, api_fn block);
+// API value_t list_each_r(value_t list, value_t context, api_fn block);
+// API value_t list_each(value_t list, value_t context, api_fn block);
+// API value_t list_map_r(value_t list, value_t context, api_fn block);
+// API value_t list_map(value_t list, value_t context, api_fn block);
 
 // Tables
 
@@ -142,72 +146,8 @@ API value_t table_aset(value_t map, value_t keys, value_t value);
 API value_t table_del(value_t map, value_t key);
 API value_t table_adel(value_t map, value_t keys);
 
-// Misc
+// Iterators
+// API value_t iter_any(value_t iter, value_t ctx, api_fn fn);
 
-
-// #define caar(var) car(car(var))
-// #define cadr(var) cdr(car(var))
-// #define cdar(var) car(cdr(var))
-// #define cddr(var) cdr(cdr(var))
-// #define caaar(var) car(car(car(var)))
-// #define caadr(var) car(car(cdr(var)))
-// #define cadar(var) car(cdr(car(var)))
-// #define caddr(var) car(cdr(cdr(var)))
-// #define cdaar(var) cdr(car(car(var)))
-// #define cdadr(var) cdr(car(cdr(var)))
-// #define cddar(var) cdr(cdr(car(var)))
-// #define cdddr(var) cdr(cdr(cdr(var)))
-// #define caaaar(var) car(car(car(car(var))))
-// #define caaadr(var) car(car(car(cdr(var))))
-// #define caadar(var) car(car(cdr(car(var))))
-// #define caaddr(var) car(car(cdr(cdr(var))))
-// #define cadaar(var) car(cdr(car(car(var))))
-// #define cadadr(var) car(cdr(car(cdr(var))))
-// #define caddar(var) car(cdr(cdr(car(var))))
-// #define cadddr(var) car(cdr(cdr(cdr(var))))
-// #define cdaaar(var) cdr(car(car(car(var))))
-// #define cdaadr(var) cdr(car(car(cdr(var))))
-// #define cdadar(var) cdr(car(cdr(car(var))))
-// #define cdaddr(var) cdr(car(cdr(cdr(var))))
-// #define cddaar(var) cdr(cdr(car(car(var))))
-// #define cddadr(var) cdr(cdr(car(cdr(var))))
-// #define cdddar(var) cdr(cdr(cdr(car(var))))
-// #define cddddr(var) cdr(cdr(cdr(cdr(var))))
-
-API value_t eval(value_t env, value_t expr);
-
-#define var1(env, args, a)       \
-  value_t a = eval(env, car(args));
-
-#define fn1(name, a, body) \
-static value_t name(value_t env, value_t args) { \
-  var1(env, args, a) \
-  body \
-}
-
-
-#define var2(env, args, a, b)       \
-  value_t a = eval(env, car(args)); \
-  args = cdr(args);                 \
-  value_t b = eval(env, car(args));
-
-#define fn2(name, a, b, body) \
-static value_t name(value_t env, value_t args) { \
-  var2(env, args, a, b) \
-  body \
-}
-
-#define var3(env, args, a, b, c)    \
-  value_t a = eval(env, car(args)); \
-  args = cdr(args);                 \
-  value_t b = eval(env, car(args)); \
-  args = cdr(args);                 \
-  value_t c = eval(env, car(args));
-
-#define fn3(name, a, b, c, body) \
-static value_t name(value_t env, value_t args) { \
-  var3(env, args, a, b, c) \
-  body \
-}
 
 #endif

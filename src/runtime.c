@@ -40,68 +40,78 @@ static void full_dump(value_t val) {
 #endif
 #endif
 
-// FN is pre-evaluated
-// args is list of unevaluated arguments
-API value_t apply(value_t env, value_t fn, value_t args) {
 
+static value_t __eval(value_t env, value_t val) {
+  // Symbols look up in environment or return self for builtins.
+  if (val.type == SymbolType) {
+    return val.data < 0 ? table_get(env, val) : val;
+  }
+  // Simple types are returned unchanged.
+  if (val.type != PairType) return val;
+  value_t head = next(&val);
+  if (head.type == SymbolType && head.data >= 0 && head.data < first_fn) {
+    // For keywords, inject environment and don't evaluate arguments.
+    return apply(cons(head, cons(env, val)));
+  }
+  // For everything else, pre-eval the arguments.
+  value_t copy = cons(eval(env, head), Nil);
+  value_t cnode = copy;
+  while (val.type == PairType) {
+    value_t nextNode = cons(eval(env, next(&val)), Nil);
+    set_cdr(cnode, nextNode);
+    cnode = nextNode;
+  }
+  #ifdef TRACE
+    print_string(space, indent - 1);
+    print("mid: ");
+    full_dump(copy);
+  #endif
+  // And apply as normal
+  return apply(copy);
+}
+
+API value_t eval(value_t env, value_t val) {
+  #ifdef TRACE
+    print_string(space, indent);
+    print("in:  ");
+    full_dump(val);
+    indent++;
+  #endif
+  value_t res = __eval(env, val);
+  #ifdef TRACE
+    indent--;
+    print_string(space, indent);
+    print("out: ");
+    full_dump(res);
+  #endif
+  return res;
+}
+
+API value_t block(value_t env, value_t body) {
+  value_t result = Undefined;
+  while (body.type == PairType) {
+    result = eval(env, next(&body));
+  }
+  return result;
+}
+
+// args is fn followed by arguments to apply to fn
+API value_t apply(value_t args) {
+  value_t fn = next(&args);
   // Native function.
   if (fn.type == SymbolType && fn.data >= 0) {
     api_fn native = symbols_get_fn(fn.data);
-    return native(env, args);
+    return native(args);
   }
-
-  // Create a new empty environment (no closures for now)
+  // Create a new empty environment.
   value_t subEnv = Nil;
   // Apply arguments to parameters
-  value_t params = car(fn);
+  value_t params = next(&fn);
   while (params.type == PairType) {
-    value_t name = car(params);
-    value_t value;
-    if (args.type == PairType) {
-      value = eval(env, car(args));
-      args = cdr(args);
-    }
-    else {
-      value = Undefined;
-    }
-    subEnv = table_set(subEnv, name, value);
-    params = cdr(params);
+    subEnv = table_set(subEnv, next(&params), next(&args));
   }
-
-  // Run each value in the body one at a time returning the last value
-  value_t body = cdr(fn);
-  return list_each(subEnv, body, eval);
+  return block(subEnv, fn);
 }
 
-API value_t eval(value_t env, value_t expr) {
-
-#ifdef TRACE
-  // print_string(space, indent);
-  // print("env: ");
-  // dump(env);
-  print_string(space, indent);
-  print("in:  ");
-  full_dump(expr);
-  indent++;
-#endif
-
-  // Resolve user variables to entry in environment.
-  // Builtins return themselves.
-  if (expr.type == SymbolType) {
-    expr = 1 ? expr : Nil;
-    expr = expr.data < 0 ? table_get(env, expr) : expr;
-  }
-
-  else if (expr.type == PairType) {
-    expr = apply(env, eval(env, car(expr)), cdr(expr));
-  }
-#ifdef TRACE
-  indent--;
-  print_string(space, indent);
-  print("out: ");
-  full_dump(expr);
-#endif
-  return expr;
-}
 
 #endif

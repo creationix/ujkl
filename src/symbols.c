@@ -8,11 +8,12 @@
 static char *symbols;
 static size_t symbols_len;
 static const builtin_t *builtins;
+API int first_fn;
 
-API void symbols_init(const builtin_t *fns) {
+API void symbols_init(const builtin_t *fns, int numKeywords) {
   builtins = fns;
+  first_fn = numKeywords;
 }
-
 
 static void symbols_resize(size_t needed) {
   if (needed < symbols_len) return;

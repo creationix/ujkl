@@ -62,10 +62,17 @@ will resolve using the result of the previous as the new table.
 - (else-if condition block...)
 - (else block...)
 - (while condition block...)
+- (do block...)
 
 ## Functions
 
 Functions simply take a list of arguments (pre-evaluated) and return a value.
+
+A function can be a builtin or user-defined structure.  A user-defined function
+is an parameters list followed by the body.
+
+- (fn args...) - Call a function with args
+- (apply fn args...) - same thing, but exposing apply.
 
 ### Cons Pair Operations
 
