@@ -33,7 +33,7 @@ static value_t getSymbols(const char* start, const char* end) {
     i++;
   }
   if (isNil(parts)) return SymbolRange(start, end);
-  return list_reverse(cons(SymbolRange(s,end), parts));
+  return list_ireverse(cons(SymbolRange(s,end), parts));
 }
 
 static void parse(const char *data) {
@@ -155,7 +155,7 @@ static void parse(const char *data) {
       value = cons(atom, value);
     }
   }
-  value = list_reverse(value);
+  value = list_ireverse(value);
 
   print("\r\x1b[K");
   print(prompt);
@@ -553,7 +553,7 @@ static value_t _iter_map(value_t args) {
   value_t fn = next(&args);
   value_t ctx = cons(fn, Nil);
   iter_any(iter, ctx, map_callback);
-  return list_reverse(cdr(ctx));
+  return list_ireverse(cdr(ctx));
 }
 
 static void filter_callback(value_t ctx, value_t item) {
@@ -567,7 +567,7 @@ static value_t _iter_filter(value_t args) {
   value_t fn = next(&args);
   value_t ctx = cons(fn, Nil);
   iter_any(iter, ctx, filter_callback);
-  return list_reverse(cdr(ctx));
+  return list_ireverse(cdr(ctx));
 }
 
 static const builtin_t *functions = (const builtin_t[]){
