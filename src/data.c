@@ -8,6 +8,31 @@ static pair_t *pairs;
 static int next_pair;
 static int num_pairs;
 
+static void mark(value_t node) {
+  if (node.type != PairType || pairs[node.data].raw == Free.raw || pairs[node.data].left.gc) return;
+  pairs[node.data].left.gc = 1;
+  mark(pairs[node.data].left);
+  mark(pairs[node.data].right);
+}
+
+API int collectgarbage(value_t root) {
+  mark(root);
+  int num_freed = 0;
+  for (int i = num_pairs - 1; i >= 0; i--) {
+    if (pairs[i].left.gc) {
+      pairs[i].left.gc = 0;
+      continue;
+    }
+    if (pairs[i].raw == Free.raw) {
+      continue;
+    }
+    pairs[i].raw = Free.raw;
+    next_pair = i;
+    num_freed++;
+  }
+  return num_freed;
+}
+
 API value_t Bool(bool val) {
   return val ? True : False;
 }
@@ -120,6 +145,7 @@ API bool isTruthy(value_t value) {
 API bool isFree(pair_t pair) {
   return pair.raw == Free.raw;
 }
+
 
 
 #endif

@@ -163,6 +163,9 @@ static void parse(const char *data) {
   while (value.type == PairType) {
     dump(eval(repl, next(&value)));
   }
+  print("gc: ");
+  print_int(8*collectgarbage(repl));
+  print_char('\n');
 }
 
 // Passes values through unaffected
@@ -588,8 +591,8 @@ static const builtin_t *functions = (const builtin_t[]){
   {"cons", _cons},
   {"car", _car},
   {"cdr", _cdr},
-  {"set_car", _set_car},
-  {"set_cdr", _set_cdr},
+  {"set-car", _set_car},
+  {"set-cdr", _set_cdr},
 
   {"table?", _is_table},
   {"t-get", _table_get},
@@ -649,6 +652,9 @@ int main() {
     "(map 5 *10)",
     "(filter 10 even)",
     "(each (map (filter 10 even) *10) print)",
+    "(def greet (person) (print 'Hello (t-get person 'name)))",
+    "(set 'jack.name \"Jack Dean\")",
+    "(greet jack)",
     0
   };
 

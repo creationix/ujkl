@@ -10,7 +10,7 @@ static void iter_int(value_t iter, value_t ctx, callback_t fn) {
     start = 0, end = iter.data, incr = 1;
   }
   else {
-    start = -iter.data, end = 0, incr = -1;
+    start = -iter.data - 1, end = -1, incr = -1;
   }
   while (start != end) {
     fn(ctx, cons(Integer(start), Nil));

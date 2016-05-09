@@ -79,11 +79,12 @@ API void dump(value_t val);
 API void dump_line(value_t val);
 
 // Data
+#define EmptySlot ((value_t){.type = AtomType, .data = -10})
 #define RangeError ((value_t){.type = AtomType, .data = -5})
 #define TypeError ((value_t){.type = AtomType, .data = -4})
 #define Dot ((value_t){.type = AtomType, .data = -3})
 #define Undefined ((value_t){.type = AtomType, .data = -2})
-#define Free ((pair_t){.raw = ~0ul})
+#define Free ((pair_t){.left = EmptySlot, .right = EmptySlot})
 #define Nil ((value_t){.type = AtomType,.data = -1})
 #define False ((value_t){.type = AtomType,.data = 0})
 #define True ((value_t){.type = AtomType,.data = 1})
@@ -95,6 +96,7 @@ API void dump_line(value_t val);
   } \
   node; })
 #define Mapping(name, value) cons(Symbol(#name),value)
+API int collectgarbage(value_t root);
 API pair_t get_pair(value_t slot);
 API value_t next(value_t *args);
 API value_t Bool(bool val);
