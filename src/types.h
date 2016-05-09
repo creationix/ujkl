@@ -123,6 +123,7 @@ API value_t apply(value_t fn, value_t args);
 API bool is_list(value_t val);
 API int list_length(value_t list);
 API value_t list_reverse(value_t list);
+API value_t list_ireverse(value_t list);
 API value_t list_append(value_t list, value_t values);
 API value_t list_sort(value_t list);
 // API value_t list_custom_sort(value_t list, value_t ctx, api_fn sorter);

@@ -29,6 +29,19 @@ API value_t list_reverse(value_t list) {
   return copy;
 }
 
+// in-place reverse.
+API value_t list_ireverse(value_t list) {
+  value_t reversed = Nil;
+  while (list.type == PairType) {
+    pair_t pair = get_pair(list);
+    set_cdr(list, reversed);
+    reversed = list;
+    list = pair.right;
+  }
+  return reversed;
+}
+
+
 API value_t list_append(value_t list, value_t values) {
   if (isNil(list)) return values;
   value_t node = list;
