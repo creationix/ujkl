@@ -57,7 +57,11 @@
 
 static value_t seen;
 
-static void _dump(value_t val) {
+static void unsee() {
+  seen = free_list(seen);
+}
+
+API void _dump(value_t val) {
   switch (val.type) {
     case AtomType:
       switch (val.data) {
@@ -80,11 +84,12 @@ static void _dump(value_t val) {
     case PairType: {
       value_t node = seen;
       while (node.type == PairType) {
-        if (eq(car(node), val)) {
+        pair_t pair = get_pair(node);
+        if (eq(pair.left, val)) {
           print(CPAREN"("CSEP"..."CPAREN")");
           return;
         }
-        node = cdr(node);
+        node = pair.right;
       }
       seen = cons(val, seen);
       pair_t pair = get_pair(val);
@@ -151,21 +156,30 @@ static void _dump(value_t val) {
 }
 
 API void dump(value_t val) {
-  seen = Nil;
+  unsee();
   _dump(val);
   print(COFF"\n");
+}
+
+API void dump_pair(pair_t pair) {
+  unsee();
+  print(CPAREN"(");
+  _dump(pair.left);
+  print(CSEP" . ");
+  _dump(pair.right);
+  print(CPAREN")"COFF"\n");
 }
 
 API void dump_line(value_t val) {
   if (val.type == PairType) {
     pair_t pair = get_pair(val);
-    seen = Nil;
+    unsee();
     _dump(pair.left);
     val = pair.right;
     while (val.type == PairType) {
       print_char(' ');
       pair_t pair = get_pair(val);
-      seen = Nil;
+      unsee();
       _dump(pair.left);
       val = pair.right;
     }

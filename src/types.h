@@ -77,6 +77,8 @@ API api_fn symbols_get_fn(int index);
 API void dump(value_t val);
 // Prints multiple values with spaces between them
 API void dump_line(value_t val);
+// Print a pair
+API void dump_pair(pair_t pair);
 
 // Data
 #define EmptySlot ((value_t){.type = AtomType, .data = -10})
@@ -96,6 +98,9 @@ API void dump_line(value_t val);
   } \
   node; })
 #define Mapping(name, value) cons(Symbol(#name),value)
+API value_t copy(value_t value);
+API value_t free_list(value_t node);
+API pair_t free_cell(value_t node);
 API int collectgarbage(value_t root);
 API pair_t get_pair(value_t slot);
 API value_t next(value_t *args);

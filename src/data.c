@@ -8,6 +8,32 @@ static pair_t *pairs;
 static int next_pair;
 static int num_pairs;
 
+
+API value_t copy(value_t value) {
+  if (value.type != PairType) return value;
+  pair_t pair = get_pair(value);
+  return cons(copy(pair.left), copy(pair.right));
+}
+
+API pair_t free_cell(value_t node) {
+  if (node.type != PairType) return Free;
+  int index = node.data;
+  pair_t pair = pairs[index];
+  pairs[index] = Free;
+  if (index < next_pair) next_pair = index;
+  return pair;
+}
+
+API value_t free_list(value_t node) {
+  while (node.type == PairType) {
+    int index = node.data;
+    node = pairs[index].right;
+    pairs[index] = Free;
+    if (index < next_pair) next_pair = index;
+  }
+  return node;
+}
+
 static void mark(value_t node) {
   if (node.type != PairType || pairs[node.data].raw == Free.raw || pairs[node.data].left.gc) return;
   pairs[node.data].left.gc = 1;
@@ -26,6 +52,8 @@ API int collectgarbage(value_t root) {
     if (pairs[i].raw == Free.raw) {
       continue;
     }
+    print("collected: ");
+    dump_pair(pairs[i]);
     pairs[i].raw = Free.raw;
     next_pair = i;
     num_freed++;
