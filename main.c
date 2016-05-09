@@ -19,6 +19,7 @@
 
 static value_t repl;
 
+
 // Look for dots and parse into list of symbols if found.
 static value_t getSymbols(const char* start, const char* end) {
   value_t parts = Nil;
@@ -64,21 +65,22 @@ static void parse(const char *data) {
       value_t fixed = Nil;
       bool dot = false;
       while (value.type == PairType) {
-        value_t slot = car(value);
-        if (eq(slot, Dot)) {
+        pair_t pair = get_pair(value);
+        if (eq(pair.left, Dot)) {
           dot = true;
         }
         else {
           if (dot) {
             dot = false;
-            fixed = car(fixed);
+            fixed = free_cell(fixed).left;
           }
-          fixed = cons(slot, fixed);
+          set_cdr(value, fixed);
+          fixed = value;
         }
-        value = cdr(value);
+        value = pair.right;
       }
       value = cons(fixed, car(stack));
-      stack = cdr(stack);
+      stack = free_cell(stack).right;
       data++;
     }
     else if (*data == '\'') {
@@ -155,16 +157,22 @@ static void parse(const char *data) {
       value = cons(atom, value);
     }
   }
+  stack = free_list(stack);
   value = list_ireverse(value);
 
   print("\r\x1b[K");
   print(prompt);
   dump_line(value);
+  value_t parts = value;
   while (value.type == PairType) {
-    dump(eval(repl, next(&value)));
+    value_t expr = next(&value);
+    dump(eval(repl, expr));
+    free_list(expr);
   }
+  free_list(parts);
+  int freed = collectgarbage(repl);
   print("gc: ");
-  print_int(8*collectgarbage(repl));
+  print_int(freed);
   print_char('\n');
 }
 
@@ -351,6 +359,11 @@ static value_t _list_reverse(value_t args) {
   if (!is_list(list)) return TypeError;
   return list_reverse(list);
 }
+static value_t _list_ireverse(value_t args) {
+  value_t list = next(&args);
+  if (!is_list(list)) return TypeError;
+  return list_ireverse(list);
+}
 static value_t _list_append(value_t args) {
   value_t list = next(&args);
   if (!is_list(list)) return TypeError;
@@ -420,13 +433,14 @@ static value_t _list_remove(value_t args) {
   return list;
 }
 
+
 // Define a function
 static value_t _def(value_t args) {
   value_t env = next(&args);
   value_t key = next(&args);
   is_list(key) ?
-    table_aset(env, key, args) :
-    table_set(env, key, args);
+    table_aset(env, key, copy(args)) :
+    table_set(env, key, copy(args));
   return key;
 }
 
@@ -541,7 +555,7 @@ static value_t _iter_each(value_t args) {
   value_t fn = next(&args);
   value_t ctx = cons(fn, Undefined);
   iter_any(iter, ctx, each_callback);
-  return cdr(ctx);
+  return free_cell(ctx).right;
 }
 
 static void map_callback(value_t ctx, value_t item) {
@@ -553,7 +567,7 @@ static value_t _iter_map(value_t args) {
   value_t fn = next(&args);
   value_t ctx = cons(fn, Nil);
   iter_any(iter, ctx, map_callback);
-  return list_ireverse(cdr(ctx));
+  return list_ireverse(free_cell(ctx).right);
 }
 
 static void filter_callback(value_t ctx, value_t item) {
@@ -567,7 +581,7 @@ static value_t _iter_filter(value_t args) {
   value_t fn = next(&args);
   value_t ctx = cons(fn, Nil);
   iter_any(iter, ctx, filter_callback);
-  return list_ireverse(cdr(ctx));
+  return list_ireverse(free_cell(ctx).right);
 }
 
 static const builtin_t *functions = (const builtin_t[]){
@@ -603,6 +617,7 @@ static const builtin_t *functions = (const builtin_t[]){
   {"list?", _is_list},
   {"length?", _list_length},
   {"reverse", _list_reverse},
+  {"reverse!", _list_ireverse},
   {"append!", _list_append},
   {"concat!", _list_concat},
   {"sort", _list_sort},
